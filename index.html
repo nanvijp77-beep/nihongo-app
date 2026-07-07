@@ -264,6 +264,108 @@
     font-size: 0.95rem;
   }
 
+  /* ===== Grammar tab ===== */
+  .grammar-item {
+    background: var(--card);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  .grammar-item summary {
+    padding: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--main);
+    list-style: none;
+  }
+  .grammar-item summary::before { content: "▸ "; }
+  .grammar-item[open] summary::before { content: "▾ "; }
+  .grammar-body { padding: 0 14px 14px; font-size: 0.95rem; line-height: 1.7; }
+  .grammar-body .ex {
+    background: var(--bg);
+    border-left: 4px solid var(--yellow);
+    padding: 8px 10px;
+    margin: 8px 0;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .grammar-body .ex .ja-text { font-weight: bold; color: var(--main); }
+  .grammar-body .ex small { display: block; color: #777; font-weight: normal; }
+
+  /* ===== Talk tab ===== */
+  .talk-levels { display: flex; flex-direction: column; gap: 10px; }
+  .talk-levels button {
+    padding: 14px;
+    border: 2px solid var(--main);
+    border-radius: 12px;
+    background: #fff;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--main);
+    cursor: pointer;
+    text-align: left;
+  }
+  .talk-levels button small { display: block; color: #888; font-weight: normal; margin-top: 2px; }
+  .chat-box {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 12px;
+    min-height: 260px;
+    max-height: 45vh;
+    overflow-y: auto;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .bubble { max-width: 85%; padding: 10px 12px; border-radius: 14px; font-size: 0.95rem; line-height: 1.5; }
+  .bubble .sub { display: block; font-size: 0.78rem; opacity: 0.75; margin-top: 4px; }
+  .bubble.bot { background: var(--bg); border: 1px solid #eadfce; align-self: flex-start; }
+  .bubble.user { background: var(--ok); color: #fff; align-self: flex-end; }
+  .bubble.bot .bubble-speak { border: none; background: none; cursor: pointer; font-size: 1rem; padding: 0 4px; }
+  .talk-choices { display: flex; flex-direction: column; gap: 8px; }
+  .talk-choices .choice-row { display: flex; align-items: center; gap: 8px; }
+  .talk-choices .choice-row > button.choice-main {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid var(--ok);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--text);
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-align: left;
+  }
+  .talk-choices button small { display: block; color: #888; }
+  .choice-speak {
+    border: none;
+    background: var(--yellow);
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .talk-tools { display: flex; gap: 8px; margin-top: 10px; justify-content: center; flex-wrap: wrap; }
+  .talk-tools button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 12px;
+    background: var(--yellow);
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .talk-tools button.quit { background: #bbb; }
+  .hidden { display: none !important; }
+
   footer {
     width: 100%;
     text-align: center;
@@ -283,6 +385,8 @@
 
 <nav>
   <button id="tabPhrases" class="active" onclick="switchTab('phrases')">💬 Phrases</button>
+  <button id="tabGrammar" onclick="switchTab('grammar')">📚 Grammar</button>
+  <button id="tabTalk" onclick="switchTab('talk')">🗣️ Talk</button>
   <button id="tabPitch" onclick="switchTab('pitch')">🎵 Pitch</button>
 </nav>
 
@@ -329,6 +433,73 @@
     </div>
   </section>
 
+  <!-- ===== Grammar screen ===== -->
+  <section id="screenGrammar" class="screen">
+    <details class="grammar-item">
+      <summary>① The verb goes LAST</summary>
+      <div class="grammar-body">
+        English says "I eat sushi". Japanese says <b>"I sushi eat"</b> — the verb always comes at the end. Once you feel this rhythm, everything clicks 😎
+        <div class="ex"><span class="ja-text">私は寿司を食べます。<small>Watashi wa sushi o tabemasu — I eat sushi</small></span><button class="mini-speak" onclick="speak('私は寿司を食べます')">🔊</button></div>
+        <div class="ex"><span class="ja-text">コーヒーを飲みます。<small>Kōhī o nomimasu — I drink coffee</small></span><button class="mini-speak" onclick="speak('コーヒーを飲みます')">🔊</button></div>
+      </div>
+    </details>
+    <details class="grammar-item">
+      <summary>② Particles are little name tags</summary>
+      <div class="grammar-body">
+        Tiny words that tag the word before them: <b>は</b> (topic — "as for..."), <b>を</b> (the thing you act on), <b>に</b> (destination), <b>で</b> (where it happens).
+        <div class="ex"><span class="ja-text">東京に行きます。<small>Tōkyō ni ikimasu — I go to Tokyo</small></span><button class="mini-speak" onclick="speak('東京に行きます')">🔊</button></div>
+        <div class="ex"><span class="ja-text">レストランで食べます。<small>Resutoran de tabemasu — I eat at a restaurant</small></span><button class="mini-speak" onclick="speak('レストランで食べます')">🔊</button></div>
+      </div>
+    </details>
+    <details class="grammar-item">
+      <summary>③ です & ます = polite mode</summary>
+      <div class="grammar-body">
+        End your sentences with <b>です (desu)</b> or <b>〜ます (-masu)</b> and you're automatically polite. It's the safe default with anyone you just met — you literally can't go wrong with it 👍
+        <div class="ex"><span class="ja-text">学生です。<small>Gakusei desu — I'm a student</small></span><button class="mini-speak" onclick="speak('学生です')">🔊</button></div>
+        <div class="ex"><span class="ja-text">日本語を勉強します。<small>Nihongo o benkyō shimasu — I study Japanese</small></span><button class="mini-speak" onclick="speak('日本語を勉強します')">🔊</button></div>
+      </div>
+    </details>
+    <details class="grammar-item">
+      <summary>④ Questions are easy: just add か</summary>
+      <div class="grammar-body">
+        No flipping words around like English! Take any sentence and add <b>か (ka)</b> at the end. That's it. That's the whole rule 🎉
+        <div class="ex"><span class="ja-text">これは寿司ですか？<small>Kore wa sushi desu ka? — Is this sushi?</small></span><button class="mini-speak" onclick="speak('これは寿司ですか？')">🔊</button></div>
+        <div class="ex"><span class="ja-text">駅はどこですか？<small>Eki wa doko desu ka? — Where is the station?</small></span><button class="mini-speak" onclick="speak('駅はどこですか？')">🔊</button></div>
+      </div>
+    </details>
+    <details class="grammar-item">
+      <summary>⑤ Past tense: でした & ました</summary>
+      <div class="grammar-body">
+        Swap the ending: <b>です → でした</b>, <b>〜ます → 〜ました</b>. Done — you can talk about yesterday. (Bonus: Japanese has no future tense. Tomorrow uses the same form as today. One less thing to learn 😄)
+        <div class="ex"><span class="ja-text">おいしかったです。<small>Oishikatta desu — It was delicious</small></span><button class="mini-speak" onclick="speak('おいしかったです')">🔊</button></div>
+        <div class="ex"><span class="ja-text">京都に行きました。<small>Kyōto ni ikimashita — I went to Kyoto</small></span><button class="mini-speak" onclick="speak('京都に行きました')">🔊</button></div>
+      </div>
+    </details>
+    <details class="grammar-item">
+      <summary>⑥ Survival power phrases</summary>
+      <div class="grammar-body">
+        Three patterns that carry a whole trip: <b>〜をください</b> (please give me ~), <b>〜はどこですか</b> (where is ~?), <b>〜てもいいですか</b> (may I ~?).
+        <div class="ex"><span class="ja-text">水をください。<small>Mizu o kudasai — Water, please</small></span><button class="mini-speak" onclick="speak('水をください')">🔊</button></div>
+        <div class="ex"><span class="ja-text">トイレはどこですか？<small>Toire wa doko desu ka? — Where's the bathroom?</small></span><button class="mini-speak" onclick="speak('トイレはどこですか？')">🔊</button></div>
+        <div class="ex"><span class="ja-text">写真を撮ってもいいですか？<small>Shashin o totte mo ii desu ka? — May I take a photo?</small></span><button class="mini-speak" onclick="speak('写真を撮ってもいいですか？')">🔊</button></div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===== Talk screen ===== -->
+  <section id="screenTalk" class="screen">
+    <div id="talkLevelSelect" class="talk-levels"></div>
+    <div id="talkPlay" class="hidden">
+      <div class="chat-box" id="chatBox"></div>
+      <div class="talk-choices" id="talkChoices"></div>
+      <div class="pron-feedback" id="talkFeedback"></div>
+      <div class="talk-tools">
+        <button onclick="talkListenChoice()">🎤 Answer by voice</button>
+        <button class="quit" onclick="showTalkLevels()">← Back to levels</button>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== Pitch screen ===== -->
   <section id="screenPitch" class="screen">
     <div class="pitch-intro">
@@ -344,7 +515,7 @@
 </main>
 
 <footer>
-  Phase 1 — Phrases · Pitch 🎤<br>
+  Phase 3 — Phrases · Grammar · Talk · Pitch 🎤<br>
   📱 On iPhone? Safari works best for the mic!
 </footer>
 
@@ -656,13 +827,287 @@ function speakPitch(pairIndex, sideIndex) {
   speak(sideIndex === 0 ? p.a.say : p.b.say);
 }
 
+// ===== Talk mode (scripted conversations, 5 levels) =====
+// alt: extra spellings the speech recognizer might return
+const TALK_LEVELS = [
+  {
+    name: "Level 1: First Hello 👋",
+    desc: "Meet someone new & introduce yourself",
+    script: [
+      { bot: { ja: "こんにちは！はじめまして。", en: "Hello! Nice to meet you." },
+        choices: [
+          { ja: "はじめまして！", en: "Nice to meet you!", alt: ["初めまして"] },
+          { ja: "こんにちは！", en: "Hello!", alt: ["こんにちわ"] }
+        ] },
+      { bot: { ja: "私は田中です。お名前は何ですか？", en: "I'm Tanaka. What's your name?" },
+        choices: [
+          { ja: "ジョンです。よろしくお願いします。", en: "I'm John. Nice to meet you! (say YOUR name 😉)", alt: ["ジョンですよろしくお願いします"] }
+        ] },
+      { bot: { ja: "どこから来ましたか？", en: "Where are you from?" },
+        choices: [
+          { ja: "アメリカから来ました。", en: "I'm from the USA.", alt: ["アメリカからきました"] },
+          { ja: "イギリスから来ました。", en: "I'm from the UK.", alt: ["イギリスからきました"] }
+        ] },
+      { bot: { ja: "そうですか！日本へようこそ！", en: "Oh nice! Welcome to Japan!" },
+        choices: [
+          { ja: "ありがとうございます！", en: "Thank you!", alt: [] }
+        ] }
+    ],
+    end: { ja: "すばらしい！", en: "Awesome — Level 1 done! You just introduced yourself in Japanese 🎉" }
+  },
+  {
+    name: "Level 2: At the Restaurant 🍜",
+    desc: "Get a table, order food & drinks",
+    script: [
+      { bot: { ja: "いらっしゃいませ！何名様ですか？", en: "Welcome! How many people?" },
+        choices: [
+          { ja: "一人です。", en: "Just me.", alt: ["ひとりです", "1人です"] },
+          { ja: "二人です。", en: "Two of us.", alt: ["ふたりです", "2人です"] }
+        ] },
+      { bot: { ja: "こちらへどうぞ。ご注文は？", en: "This way, please. What would you like?" },
+        choices: [
+          { ja: "ラーメンをください。", en: "Ramen, please.", alt: ["ラーメンを下さい"] },
+          { ja: "おすすめは何ですか？", en: "What do you recommend?", alt: ["おすすめはなんですか"] }
+        ] },
+      { bot: { ja: "かしこまりました。お飲み物はいかがですか？", en: "Certainly! Anything to drink?" },
+        choices: [
+          { ja: "お水をください。", en: "Water, please.", alt: ["おみずをください", "お水を下さい"] },
+          { ja: "ビールをください。", en: "A beer, please.", alt: ["ビールを下さい"] }
+        ] },
+      { bot: { ja: "お待たせしました。どうぞ！", en: "Thanks for waiting. Here you go!" },
+        choices: [
+          { ja: "いただきます！", en: "Itadakimasu! (Let's eat!)", alt: ["頂きます"] }
+        ] }
+    ],
+    end: { ja: "おいしそうですね！", en: "Level 2 done! You ordered a whole meal in Japanese 🍜🎉" }
+  },
+  {
+    name: "Level 3: Shopping Time 🛍️",
+    desc: "Ask the price & buy a souvenir",
+    script: [
+      { bot: { ja: "いらっしゃいませ！何かお探しですか？", en: "Welcome! Looking for something?" },
+        choices: [
+          { ja: "はい、おみやげを探しています。", en: "Yes, I'm looking for souvenirs.", alt: ["はいお土産を探しています", "お土産を探しています"] }
+        ] },
+      { bot: { ja: "こちらはどうですか？人気ですよ。", en: "How about this one? It's popular!" },
+        choices: [
+          { ja: "いいですね。いくらですか？", en: "Nice! How much is it?", alt: ["いいですねいくらですか", "幾らですか"] }
+        ] },
+      { bot: { ja: "二千円です。", en: "It's 2,000 yen." },
+        choices: [
+          { ja: "じゃあ、これにします。", en: "OK, I'll take it!", alt: ["じゃあこれにします", "これにします"] },
+          { ja: "ちょっと高いですね…でも、これにします。", en: "A bit pricey... but I'll take it!", alt: ["ちょっとたかいですねでもこれにします"] }
+        ] },
+      { bot: { ja: "ありがとうございます！袋はいりますか？", en: "Thank you! Do you need a bag?" },
+        choices: [
+          { ja: "はい、お願いします。", en: "Yes, please.", alt: ["はいお願いします", "はいおねがいします"] },
+          { ja: "いいえ、大丈夫です。", en: "No, I'm good.", alt: ["いいえだいじょうぶです", "大丈夫です"] }
+        ] }
+    ],
+    end: { ja: "いい買い物でしたね！", en: "Level 3 done! You just haggled... well, shopped like a pro 🛍️🎉" }
+  },
+  {
+    name: "Level 4: Which Way?? 🗺️",
+    desc: "Ask for directions & actually understand them",
+    script: [
+      { bot: { ja: "すみません、何かお困りですか？", en: "Excuse me, do you need help?" },
+        choices: [
+          { ja: "はい、駅はどこですか？", en: "Yes — where is the station?", alt: ["はいえきはどこですか", "駅はどこですか"] }
+        ] },
+      { bot: { ja: "駅ですね。この道をまっすぐ行ってください。", en: "The station? Go straight down this road." },
+        choices: [
+          { ja: "まっすぐですね。", en: "Straight ahead, got it.", alt: ["真っ直ぐですね"] }
+        ] },
+      { bot: { ja: "はい。二つ目の信号を右に曲がってください。", en: "Yes. Then turn right at the second traffic light." },
+        choices: [
+          { ja: "二つ目の信号を右ですね。", en: "Right at the second light, OK!", alt: ["ふたつめのしんごうをみぎですね", "2つ目の信号を右ですね"] }
+        ] },
+      { bot: { ja: "そうです。歩いて五分ぐらいですよ。", en: "That's right. About 5 minutes on foot." },
+        choices: [
+          { ja: "ありがとうございます！助かりました！", en: "Thank you! You saved me!", alt: ["ありがとうございます助かりました"] }
+        ] }
+    ],
+    end: { ja: "気をつけて！", en: "Level 4 done! You'll never be lost in Japan again 🗺️🎉" }
+  },
+  {
+    name: "Level 5: Travel Chat ✈️",
+    desc: "Chat about your trip — past & future plans",
+    script: [
+      { bot: { ja: "日本は初めてですか？", en: "Is this your first time in Japan?" },
+        choices: [
+          { ja: "はい、初めてです。", en: "Yes, first time!", alt: ["はいはじめてです", "初めてです"] },
+          { ja: "いいえ、二回目です。", en: "No, it's my second time.", alt: ["いいえにかいめです", "2回目です"] }
+        ] },
+      { bot: { ja: "昨日は何をしましたか？", en: "What did you do yesterday?" },
+        choices: [
+          { ja: "浅草に行きました。", en: "I went to Asakusa.", alt: ["あさくさにいきました"] },
+          { ja: "寿司を食べました。", en: "I ate sushi.", alt: ["すしをたべました", "お寿司を食べました"] }
+        ] },
+      { bot: { ja: "いいですね！明日は何をしますか？", en: "Nice! What will you do tomorrow?" },
+        choices: [
+          { ja: "京都に行きます。", en: "I'll go to Kyoto.", alt: ["きょうとにいきます"] },
+          { ja: "買い物をします。", en: "I'll go shopping.", alt: ["かいものをします"] }
+        ] },
+      { bot: { ja: "楽しんでください！日本語が上手ですね！", en: "Have fun! Your Japanese is really good!" },
+        choices: [
+          { ja: "ありがとうございます！まだまだです。", en: "Thanks! I've still got a lot to learn. (the classic humble reply 😄)", alt: ["ありがとうございますまだまだです"] }
+        ] }
+    ],
+    end: { ja: "旅行を楽しんでください！", en: "Level 5 done! You can chat about past AND future — that's real conversation 🎉✈️" }
+  }
+];
+
+let talkLevel = 0;
+let talkStep = 0;
+
+function showTalkLevels() {
+  document.getElementById("talkLevelSelect").classList.remove("hidden");
+  document.getElementById("talkPlay").classList.add("hidden");
+  const box = document.getElementById("talkLevelSelect");
+  box.innerHTML = "";
+  TALK_LEVELS.forEach((lv, i) => {
+    const btn = document.createElement("button");
+    btn.innerHTML = "🗣️ " + lv.name + "<small>" + lv.desc + "</small>";
+    btn.onclick = () => startTalk(i);
+    box.appendChild(btn);
+  });
+}
+
+function startTalk(i) {
+  talkLevel = i;
+  talkStep = 0;
+  document.getElementById("talkLevelSelect").classList.add("hidden");
+  document.getElementById("talkPlay").classList.remove("hidden");
+  document.getElementById("chatBox").innerHTML = "";
+  document.getElementById("talkFeedback").textContent = "";
+  botSay(TALK_LEVELS[i].script[0].bot);
+  renderTalkChoices();
+}
+
+function botSay(line) {
+  const box = document.getElementById("chatBox");
+  const b = document.createElement("div");
+  b.className = "bubble bot";
+  const sp = document.createElement("button");
+  sp.className = "bubble-speak";
+  sp.textContent = "🔊";
+  sp.onclick = () => speak(line.ja);
+  b.appendChild(document.createTextNode(line.ja + " "));
+  b.appendChild(sp);
+  const sub = document.createElement("span");
+  sub.className = "sub";
+  sub.textContent = line.en;
+  b.appendChild(sub);
+  box.appendChild(b);
+  box.scrollTop = box.scrollHeight;
+  speak(line.ja);
+}
+
+function userSay(line) {
+  const box = document.getElementById("chatBox");
+  const b = document.createElement("div");
+  b.className = "bubble user";
+  b.textContent = line.ja;
+  const sub = document.createElement("span");
+  sub.className = "sub";
+  sub.textContent = line.en;
+  b.appendChild(sub);
+  box.appendChild(b);
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderTalkChoices() {
+  const step = TALK_LEVELS[talkLevel].script[talkStep];
+  const box = document.getElementById("talkChoices");
+  box.innerHTML = "";
+  step.choices.forEach(c => {
+    const row = document.createElement("div");
+    row.className = "choice-row";
+    const btn = document.createElement("button");
+    btn.className = "choice-main";
+    btn.innerHTML = c.ja + "<small>" + c.en + "</small>";
+    btn.onclick = () => chooseTalkReply(c);
+    const sp = document.createElement("button");
+    sp.className = "choice-speak";
+    sp.textContent = "🔊";
+    sp.title = "Hear this line";
+    sp.onclick = () => speak(c.ja);
+    row.appendChild(btn);
+    row.appendChild(sp);
+    box.appendChild(row);
+  });
+}
+
+function chooseTalkReply(c) {
+  userSay(c);
+  speak(c.ja); // read the learner's line too, as a model
+  document.getElementById("talkFeedback").textContent = "";
+  talkStep++;
+  const lv = TALK_LEVELS[talkLevel];
+  if (talkStep < lv.script.length) {
+    setTimeout(() => {
+      botSay(lv.script[talkStep].bot);
+      renderTalkChoices();
+    }, 1800); // wait so it doesn't talk over the learner's line
+  } else {
+    document.getElementById("talkChoices").innerHTML = "";
+    setTimeout(() => botSay(lv.end), 1800);
+  }
+}
+
+// Answer by voice: pick whichever choice sounds closest
+function talkListenChoice() {
+  const fb = document.getElementById("talkFeedback");
+  const lv = TALK_LEVELS[talkLevel];
+  if (talkStep >= lv.script.length) return;
+  if (!SR) {
+    fb.textContent = "This browser doesn't support the mic 😢 Try Chrome (Android) or Safari (iPhone)!";
+    return;
+  }
+  if (location.protocol === "file:") {
+    fb.textContent = "The mic only works on the online (https) version 📱";
+    return;
+  }
+  const choices = lv.script[talkStep].choices;
+  const r = new SR();
+  r.lang = "ja-JP";
+  r.maxAlternatives = 3;
+  fb.textContent = "👂 Listening... say one of the replies!";
+  fb.style.color = "var(--yellow)";
+  r.onresult = (e) => {
+    let bestChoice = null, bestScore = 0, heard = "";
+    for (const alt of e.results[0]) {
+      choices.forEach(c => {
+        [c.ja].concat(c.alt).forEach(t => {
+          const s = similarity(normalizeJa(alt.transcript), normalizeJa(t));
+          if (s > bestScore) { bestScore = s; bestChoice = c; heard = alt.transcript; }
+        });
+      });
+    }
+    if (bestScore >= 0.5 && bestChoice) {
+      fb.textContent = "⭕ Got it! (I heard: " + heard + ")";
+      fb.style.color = "var(--ok)";
+      chooseTalkReply(bestChoice);
+    } else {
+      fb.textContent = "❌ Hmm, I didn't catch that (I heard: " + (heard || "nothing") + ")\nGive it another go!";
+      fb.style.color = "var(--ng)";
+    }
+  };
+  r.onerror = (e) => {
+    fb.textContent = e.error === "not-allowed" ? "I need mic permission! 🙏" : "Mic error (" + e.error + ") — try again!";
+    fb.style.color = "var(--ng)";
+  };
+  r.start();
+}
+
 // ===== Tab switching =====
 function switchTab(tab) {
-  const tabs = { phrases: "Phrases", pitch: "Pitch" };
+  const tabs = { phrases: "Phrases", grammar: "Grammar", talk: "Talk", pitch: "Pitch" };
   for (const key in tabs) {
     document.getElementById("screen" + tabs[key]).classList.toggle("active", tab === key);
     document.getElementById("tab" + tabs[key]).classList.toggle("active", tab === key);
   }
+  if (tab === "talk") showTalkLevels();
 }
 
 // Initial render
