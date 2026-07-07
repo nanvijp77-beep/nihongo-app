@@ -92,73 +92,6 @@
   .screen { display: none; }
   .screen.active { display: block; }
 
-  /* ===== Kana tab ===== */
-  .toggle-row {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-  }
-  .toggle-row button {
-    padding: 6px 14px;
-    border: 1px solid var(--sub);
-    border-radius: 16px;
-    background: #fff;
-    color: var(--sub);
-    font-size: 0.85rem;
-    cursor: pointer;
-  }
-  .toggle-row button.active {
-    background: var(--sub);
-    color: #fff;
-    font-weight: bold;
-  }
-  .kana-display {
-    background: var(--card);
-    border: 3px solid var(--sub);
-    border-radius: 16px;
-    text-align: center;
-    padding: 10px;
-    margin-bottom: 12px;
-    min-height: 96px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  }
-  .kana-display .big { font-size: 2.6rem; font-weight: bold; color: var(--sub); }
-  .kana-display .small { font-size: 1rem; color: #888; }
-  .kana-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-    margin-bottom: 16px;
-  }
-  .kana-grid button {
-    padding: 8px 2px;
-    border: 1px solid #e5d8c8;
-    border-radius: 10px;
-    background: #fff;
-    cursor: pointer;
-    font-size: 1.15rem;
-    font-weight: bold;
-    color: var(--text);
-    line-height: 1.2;
-  }
-  .kana-grid button small { display: block; font-size: 0.65rem; color: #999; font-weight: normal; }
-  .kana-grid button:active { background: var(--bg); }
-  .kana-grid .empty { visibility: hidden; }
-
-  .challenge-box {
-    background: var(--card);
-    border: 3px solid var(--main);
-    border-radius: 16px;
-    padding: 16px;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  }
-  .challenge-box h3 { color: var(--main); font-size: 1rem; margin-bottom: 8px; }
-  .challenge-box .word { font-size: 2.2rem; font-weight: bold; color: var(--main); }
-  .challenge-box .meaning { font-size: 0.85rem; color: #888; margin: 4px 0 10px; }
-
   .speak-btn {
     border: none;
     background: var(--yellow);
@@ -191,16 +124,6 @@
   @keyframes pulse {
     0% { box-shadow: 0 0 0 0 rgba(231,111,81,0.5); }
     100% { box-shadow: 0 0 0 14px rgba(231,111,81,0); }
-  }
-  .next-word-btn {
-    margin-top: 10px;
-    padding: 10px 22px;
-    border: none;
-    border-radius: 12px;
-    background: var(--sub);
-    color: #fff;
-    font-weight: bold;
-    cursor: pointer;
   }
   .pron-feedback {
     min-height: 48px;
@@ -358,8 +281,7 @@
 </header>
 
 <nav>
-  <button id="tabKana" class="active" onclick="switchTab('kana')">🔤 Kana</button>
-  <button id="tabPhrases" onclick="switchTab('phrases')">💬 Phrases</button>
+  <button id="tabPhrases" class="active" onclick="switchTab('phrases')">💬 Phrases</button>
   <button id="tabPitch" onclick="switchTab('pitch')">🎵 Pitch</button>
 </nav>
 
@@ -376,37 +298,8 @@
     <button class="try-btn" onclick="speak('こんにちは！ようこそ、日本語の世界へ！')">Test voice</button>
   </div>
 
-  <!-- ===== Kana screen ===== -->
-  <section id="screenKana" class="screen active">
-    <div class="toggle-row">
-      <button id="scriptHira" class="active" onclick="setScript('hira')">Hiragana あ</button>
-      <button id="scriptKata" onclick="setScript('kata')">Katakana ア</button>
-    </div>
-    <div class="toggle-row">
-      <button id="setBasic" class="active" onclick="setKanaSet('basic')">Basic 46</button>
-      <button id="setDakuten" onclick="setKanaSet('dakuten')">With ゛゜ marks</button>
-    </div>
-    <div class="kana-display" id="kanaDisplay">
-      <div class="big">あ</div>
-      <div class="small">Tap any kana below to hear it 👇</div>
-    </div>
-    <div class="kana-grid" id="kanaGrid"></div>
-
-    <div class="challenge-box">
-      <h3>🎤 Reading Challenge</h3>
-      <div class="word" id="challengeWord"></div>
-      <div class="meaning" id="challengeMeaning"></div>
-      <div class="card-btns">
-        <button class="speak-btn" onclick="speakChallenge()">🔊</button>
-        <button class="mic-btn" id="challengeMic" onclick="startChallengeCheck()">🎤</button>
-      </div>
-      <div class="pron-feedback" id="challengeFeedback">Can you read it out loud? Tap 🎤 and go for it!</div>
-      <button class="next-word-btn" onclick="nextChallenge()">Next word →</button>
-    </div>
-  </section>
-
   <!-- ===== Phrases screen ===== -->
-  <section id="screenPhrases" class="screen">
+  <section id="screenPhrases" class="screen active">
     <div class="category-select" id="categorySelect"></div>
     <div class="flip-card" id="flipCard" onclick="flipCard()">
       <div class="flip-inner">
@@ -450,134 +343,11 @@
 </main>
 
 <footer>
-  Phase 1 — Kana · Phrases · Pitch 🎤<br>
+  Phase 1 — Phrases · Pitch 🎤<br>
   📱 On iPhone? Safari works best for the mic!
 </footer>
 
 <script>
-// ===== Kana data (hiragana; katakana is auto-generated) =====
-// null = empty cell to keep the classic gojūon chart layout
-const KANA_BASIC = [
-  ["あ","a"],["い","i"],["う","u"],["え","e"],["お","o"],
-  ["か","ka"],["き","ki"],["く","ku"],["け","ke"],["こ","ko"],
-  ["さ","sa"],["し","shi"],["す","su"],["せ","se"],["そ","so"],
-  ["た","ta"],["ち","chi"],["つ","tsu"],["て","te"],["と","to"],
-  ["な","na"],["に","ni"],["ぬ","nu"],["ね","ne"],["の","no"],
-  ["は","ha"],["ひ","hi"],["ふ","fu"],["へ","he"],["ほ","ho"],
-  ["ま","ma"],["み","mi"],["む","mu"],["め","me"],["も","mo"],
-  ["や","ya"],null,["ゆ","yu"],null,["よ","yo"],
-  ["ら","ra"],["り","ri"],["る","ru"],["れ","re"],["ろ","ro"],
-  ["わ","wa"],null,null,null,["を","wo"],
-  ["ん","n"],null,null,null,null
-];
-const KANA_DAKUTEN = [
-  ["が","ga"],["ぎ","gi"],["ぐ","gu"],["げ","ge"],["ご","go"],
-  ["ざ","za"],["じ","ji"],["ず","zu"],["ぜ","ze"],["ぞ","zo"],
-  ["だ","da"],["ぢ","ji"],["づ","zu"],["で","de"],["ど","do"],
-  ["ば","ba"],["び","bi"],["ぶ","bu"],["べ","be"],["ぼ","bo"],
-  ["ぱ","pa"],["ぴ","pi"],["ぷ","pu"],["ぺ","pe"],["ぽ","po"]
-];
-
-function toKatakana(s) {
-  return s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
-}
-
-let script = "hira";   // hira | kata
-let kanaSet = "basic"; // basic | dakuten
-
-function setScript(s) {
-  script = s;
-  document.getElementById("scriptHira").classList.toggle("active", s === "hira");
-  document.getElementById("scriptKata").classList.toggle("active", s === "kata");
-  renderKanaGrid();
-  startChallengeSet();
-}
-function setKanaSet(s) {
-  kanaSet = s;
-  document.getElementById("setBasic").classList.toggle("active", s === "basic");
-  document.getElementById("setDakuten").classList.toggle("active", s === "dakuten");
-  renderKanaGrid();
-}
-
-function renderKanaGrid() {
-  const grid = document.getElementById("kanaGrid");
-  grid.innerHTML = "";
-  const data = kanaSet === "basic" ? KANA_BASIC : KANA_DAKUTEN;
-  data.forEach(item => {
-    const btn = document.createElement("button");
-    if (!item) {
-      btn.className = "empty";
-      grid.appendChild(btn);
-      return;
-    }
-    const kana = script === "hira" ? item[0] : toKatakana(item[0]);
-    btn.innerHTML = kana + "<small>" + item[1] + "</small>";
-    btn.onclick = () => {
-      document.getElementById("kanaDisplay").innerHTML =
-        '<div class="big">' + kana + '</div><div class="small">' + item[1] + "</div>";
-      speak(kana);
-    };
-    grid.appendChild(btn);
-  });
-}
-
-// ===== Reading Challenge (kana words + mic) =====
-const HIRA_WORDS = [
-  { word: "ねこ", en: "cat", accepts: ["猫"] },
-  { word: "いぬ", en: "dog", accepts: ["犬"] },
-  { word: "みず", en: "water", accepts: ["水"] },
-  { word: "さかな", en: "fish", accepts: ["魚"] },
-  { word: "やま", en: "mountain", accepts: ["山"] },
-  { word: "そら", en: "sky", accepts: ["空"] },
-  { word: "はな", en: "flower", accepts: ["花", "鼻"] },
-  { word: "おちゃ", en: "green tea", accepts: ["お茶"] },
-  { word: "でんしゃ", en: "train", accepts: ["電車"] },
-  { word: "ともだち", en: "friend", accepts: ["友達", "友だち"] }
-];
-const KATA_WORDS = [
-  { word: "コーヒー", en: "coffee", accepts: ["珈琲"] },
-  { word: "ラーメン", en: "ramen", accepts: ["拉麺"] },
-  { word: "テレビ", en: "TV", accepts: [] },
-  { word: "カメラ", en: "camera", accepts: [] },
-  { word: "アイス", en: "ice cream", accepts: [] },
-  { word: "タクシー", en: "taxi", accepts: [] },
-  { word: "ホテル", en: "hotel", accepts: [] },
-  { word: "バス", en: "bus", accepts: [] },
-  { word: "パン", en: "bread", accepts: [] },
-  { word: "ケーキ", en: "cake", accepts: [] }
-];
-
-let challengeList = [];
-let challengeIndex = 0;
-
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function startChallengeSet() {
-  challengeList = shuffle(script === "hira" ? HIRA_WORDS : KATA_WORDS);
-  challengeIndex = 0;
-  renderChallenge();
-}
-function renderChallenge() {
-  const c = challengeList[challengeIndex];
-  document.getElementById("challengeWord").textContent = c.word;
-  document.getElementById("challengeMeaning").textContent = "(" + c.en + ")";
-  setFeedback("challengeFeedback", "Can you read it out loud? Tap 🎤 and go for it!", "var(--text)");
-}
-function nextChallenge() {
-  challengeIndex = (challengeIndex + 1) % challengeList.length;
-  renderChallenge();
-}
-function speakChallenge() {
-  speak(challengeList[challengeIndex].word);
-}
-
 // ===== Phrase data (daily conversation) =====
 const PHRASES = [
   // Greetings
@@ -818,11 +588,6 @@ function startPronunciationCheck() {
   runRecognition([w.ja, w.kana].concat(w.accepts), w.ja, "pronFeedback", "micBtn");
 }
 
-function startChallengeCheck() {
-  const c = challengeList[challengeIndex];
-  runRecognition([c.word].concat(c.accepts), c.word, "challengeFeedback", "challengeMic");
-}
-
 // ===== Pitch accent (listen & imitate) =====
 // pattern: 1 = High, 0 = Low (one number per syllable)
 const PITCH_PAIRS = [
@@ -881,7 +646,7 @@ function speakPitch(pairIndex, sideIndex) {
 
 // ===== Tab switching =====
 function switchTab(tab) {
-  const tabs = { kana: "Kana", phrases: "Phrases", pitch: "Pitch" };
+  const tabs = { phrases: "Phrases", pitch: "Pitch" };
   for (const key in tabs) {
     document.getElementById("screen" + tabs[key]).classList.toggle("active", tab === key);
     document.getElementById("tab" + tabs[key]).classList.toggle("active", tab === key);
@@ -889,8 +654,6 @@ function switchTab(tab) {
 }
 
 // Initial render
-renderKanaGrid();
-startChallengeSet();
 renderCategoryButtons();
 renderCard();
 renderPitchList();
