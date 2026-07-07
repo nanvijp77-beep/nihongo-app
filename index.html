@@ -364,7 +364,69 @@
     cursor: pointer;
   }
   .talk-tools button.quit { background: #bbb; }
+  .talk-levels button:disabled { opacity: 0.45; cursor: default; }
   .hidden { display: none !important; }
+
+  /* ===== Foods tab ===== */
+  .food-status {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .food-status .lv { font-size: 1.2rem; font-weight: bold; color: var(--main); }
+  .food-status .task { font-size: 0.9rem; color: #666; margin-top: 4px; }
+  .yum-bar { height: 14px; background: #eee; border-radius: 7px; overflow: hidden; margin-top: 8px; }
+  .yum-bar div {
+    height: 100%;
+    background: linear-gradient(90deg, var(--yellow), var(--main));
+    border-radius: 7px;
+    transition: width 0.4s;
+  }
+  .yum-note { font-size: 0.75rem; color: #999; margin-top: 4px; }
+  .food-scroll {
+    overflow-x: auto;
+    background: #fdf3e3;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-bottom: 12px;
+  }
+  .tier-info {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 0.85rem;
+    line-height: 1.8;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .reset-btn {
+    border: none;
+    background: none;
+    color: #bbb;
+    text-decoration: underline;
+    cursor: pointer;
+    margin-top: 10px;
+    font-size: 0.8rem;
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    background: var(--main);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 24px;
+    font-weight: bold;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    z-index: 99;
+    transition: opacity 0.4s;
+    text-align: center;
+    max-width: 90%;
+    pointer-events: none;
+  }
 
   footer {
     width: 100%;
@@ -388,6 +450,7 @@
   <button id="tabGrammar" onclick="switchTab('grammar')">📚 Grammar</button>
   <button id="tabTalk" onclick="switchTab('talk')">🗣️ Talk</button>
   <button id="tabPitch" onclick="switchTab('pitch')">🎵 Pitch</button>
+  <button id="tabFoods" onclick="switchTab('foods')">🍜 Foods</button>
 </nav>
 
 <main>
@@ -512,10 +575,25 @@
     </div>
     <div id="pitchList"></div>
   </section>
+
+  <!-- ===== Foods screen ===== -->
+  <section id="screenFoods" class="screen">
+    <div class="food-status">
+      <div class="lv" id="foodLevelText"></div>
+      <div class="task" id="foodTask"></div>
+      <div class="yum-bar"><div id="yumFill" style="width:0%"></div></div>
+      <div class="yum-note" id="yumNote"></div>
+    </div>
+    <div class="food-scroll"><svg id="foodSvg" width="1560" height="320" viewBox="0 0 1560 320" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="tier-info" id="tierInfo"></div>
+    <div style="text-align:center"><button class="reset-btn" onclick="resetFoods()">Reset my food journey</button></div>
+  </section>
 </main>
 
+<div id="toast" class="toast" style="opacity:0"></div>
+
 <footer>
-  Phase 3 — Phrases · Grammar · Talk · Pitch 🎤<br>
+  Phase 4 — Phrases · Grammar · Talk · Pitch · Foods 🍜<br>
   📱 On iPhone? Safari works best for the mic!
 </footer>
 
@@ -735,9 +813,11 @@ function runRecognition(targets, displayTarget, feedbackId, micBtnId) {
   recog.onresult = (e) => {
     const { best, bestScore } = bestMatch(e.results[0], targets);
     if (bestScore >= 0.85) {
-      setFeedback(feedbackId, "⭕ Perfect! You nailed it! 🎉\n(I heard: " + best + ")", "var(--ok)");
+      setFeedback(feedbackId, "⭕ Perfect! You nailed it! 🎉 😋+2\n(I heard: " + best + ")", "var(--ok)");
+      addYum(2);
     } else if (bestScore >= 0.6) {
-      setFeedback(feedbackId, "🔶 Sooo close! One more try 💪\n(I heard: " + best + ")", "var(--yellow)");
+      setFeedback(feedbackId, "🔶 Sooo close! One more try 💪 😋+1\n(I heard: " + best + ")", "var(--yellow)");
+      addYum(1);
     } else {
       setFeedback(feedbackId, "❌ Hmm, I didn't quite catch that.\n(I heard: " + (best || "nothing") + ")\nTap 🔊 to hear it again!", "var(--ng)");
     }
@@ -967,8 +1047,13 @@ function showTalkLevels() {
   box.innerHTML = "";
   TALK_LEVELS.forEach((lv, i) => {
     const btn = document.createElement("button");
-    btn.innerHTML = "🗣️ " + lv.name + "<small>" + lv.desc + "</small>";
-    btn.onclick = () => startTalk(i);
+    if (food.level >= TIER_UNLOCK[i]) {
+      btn.innerHTML = "🗣️ " + lv.name + "<small>" + lv.desc + "</small>";
+      btn.onclick = () => startTalk(i);
+    } else {
+      btn.innerHTML = "🔒 " + lv.name + "<small>Opens at Food Level " + TIER_UNLOCK[i] + " — earn 😋 points with 🎤 practice!</small>";
+      btn.disabled = true;
+    }
     box.appendChild(btn);
   });
 }
@@ -1051,7 +1136,10 @@ function chooseTalkReply(c) {
     }, 1800); // wait so it doesn't talk over the learner's line
   } else {
     document.getElementById("talkChoices").innerHTML = "";
-    setTimeout(() => botSay(lv.end), 1800);
+    setTimeout(() => {
+      botSay(lv.end);
+      if (!addYum(5)) showToast("🗣️ Conversation cleared! 😋+5");
+    }, 1800);
   }
 }
 
@@ -1100,20 +1188,195 @@ function talkListenChoice() {
   r.start();
 }
 
+// ===== Food journey (collection game, 15 dishes x 3 stages = 45 levels) =====
+const STAGE_NAMES = ["Ingredients 🥬", "Cooking 🍳", "Ready! 🍽️"];
+const LEVEL_COST = 10;              // 10 yum points = 1 level
+const TIER_UNLOCK = [0, 9, 18, 27, 36]; // food level needed to open each talk level
+
+// shared drawing bits
+const BOARD = `<rect x="16" y="240" width="68" height="10" rx="3" fill="#d9b382"/><rect x="20" y="250" width="60" height="4" fill="#c8a26b"/>`;
+const PLATE = `<ellipse cx="50" cy="244" rx="34" ry="9" fill="#eef0f5"/><ellipse cx="50" cy="241" rx="26" ry="6" fill="#ffffff"/>`;
+const STEAM = `<path d="M38 202 q-4 -9 0 -17" stroke="#c9d6dd" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M50 204 q4 -10 0 -19" stroke="#c9d6dd" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M62 202 q-4 -9 0 -16" stroke="#c9d6dd" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+const POT = `<rect x="26" y="208" width="48" height="30" rx="6" fill="#7d8894"/><rect x="18" y="210" width="8" height="6" rx="2" fill="#5e6874"/><rect x="74" y="210" width="8" height="6" rx="2" fill="#5e6874"/><rect x="30" y="238" width="40" height="8" rx="3" fill="#4a5560"/>`;
+const PAN = `<ellipse cx="46" cy="230" rx="28" ry="9" fill="#5a6470"/><rect x="72" y="226" width="20" height="5" rx="2" fill="#3f4854"/><rect x="34" y="239" width="24" height="7" rx="3" fill="#4a5560"/>`;
+
+const FOODS = [
+  { ja: "寿司", en: "Sushi",
+    s1: BOARD + `<ellipse cx="30" cy="231" rx="12" ry="8" fill="#fdfdfd"/><path d="M50 224 q12 -10 30 -4 l-4 12 q-16 4 -26 -2z" fill="#f4845f"/><path d="M56 224 q9 -3 17 -1" stroke="#ffd9c9" stroke-width="2" fill="none"/>`,
+    s2: BOARD + `<ellipse cx="32" cy="234" rx="12" ry="7" fill="#fff"/><ellipse cx="62" cy="234" rx="12" ry="7" fill="#fff"/><path d="M46 206 q10 -7 24 -3 l-3 9 q-11 3 -21 -2z" fill="#f4845f"/>`,
+    s3: PLATE + `<ellipse cx="34" cy="236" rx="13" ry="7" fill="#fff"/><path d="M22 228 q12 -8 26 -2 l-2 7 q-13 4 -24 -1z" fill="#f4845f"/><ellipse cx="66" cy="236" rx="13" ry="7" fill="#fff"/><path d="M54 228 q12 -8 26 -2 l-2 7 q-13 4 -24 -1z" fill="#e8483f"/><circle cx="50" cy="246" r="3" fill="#7ab648"/>` },
+  { ja: "ラーメン", en: "Ramen",
+    s1: BOARD + `<path d="M24 226 q3 -14 6 0 q3 -14 6 0 q3 -14 6 0 q3 -14 6 0" stroke="#e8c547" stroke-width="3" fill="none"/><ellipse cx="66" cy="228" rx="8" ry="10" fill="#fff"/><rect x="78" y="216" width="5" height="22" rx="2" fill="#7ab648"/>`,
+    s2: POT + STEAM + `<path d="M32 208 q4 -8 8 0 q4 -8 8 0 q4 -8 8 0 q4 -8 8 0" stroke="#e8c547" stroke-width="3" fill="none"/>`,
+    s3: STEAM + `<path d="M18 222 q32 6 64 0 l-6 22 q-26 10 -52 0z" fill="#c0392b"/><path d="M22 220 q6 -8 10 0 q6 -8 10 0 q6 -8 10 0 q6 -8 10 0 q6 -8 10 0" stroke="#e8c547" stroke-width="3" fill="none"/><ellipse cx="36" cy="216" rx="7" ry="5" fill="#fff"/><circle cx="36" cy="216" r="2.5" fill="#e8a020"/><circle cx="60" cy="214" r="7" fill="#c98a5b"/><rect x="72" y="206" width="8" height="12" fill="#2e3d2f"/>` },
+  { ja: "たこ焼き", en: "Takoyaki",
+    s1: BOARD + `<path d="M24 220 q14 16 28 0 l-2 12 q-12 8 -24 0z" fill="#f0e6d0"/><ellipse cx="38" cy="218" rx="12" ry="4" fill="#f7edd8"/><circle cx="68" cy="228" r="8" fill="#e88a9a"/><path d="M62 234 q-4 6 2 8 M74 234 q4 6 -2 8" stroke="#e88a9a" stroke-width="3" fill="none"/>`,
+    s2: `<rect x="20" y="216" width="60" height="26" rx="6" fill="#4a4f58"/><circle cx="34" cy="226" r="7" fill="#e9b95f"/><circle cx="52" cy="226" r="7" fill="#e9b95f"/><circle cx="70" cy="226" r="7" fill="#d9a446"/>` + STEAM,
+    s3: PLATE + `<circle cx="34" cy="232" r="9" fill="#c98a3f"/><circle cx="54" cy="232" r="9" fill="#c98a3f"/><circle cx="70" cy="234" r="8" fill="#c98a3f"/><path d="M27 228 q8 -5 14 0 M47 228 q8 -5 14 0" stroke="#7a4a1f" stroke-width="3" fill="none"/><path d="M30 224 l3 -4 M52 224 l3 -4 M68 226 l3 -4" stroke="#e8c9a0" stroke-width="2"/><rect x="42" y="210" width="2" height="14" fill="#b08a5a"/>` },
+  { ja: "お好み焼き", en: "Okonomiyaki",
+    s1: BOARD + `<circle cx="30" cy="226" r="11" fill="#a8d078"/><path d="M24 222 q6 4 12 0 M26 230 q5 3 10 0" stroke="#7ab648" stroke-width="2" fill="none"/><path d="M52 220 q12 14 24 0 l-2 12 q-10 7 -20 0z" fill="#f0e6d0"/><ellipse cx="83" cy="232" rx="6" ry="8" fill="#fff"/>`,
+    s2: `<rect x="18" y="232" width="64" height="10" rx="4" fill="#4a4f58"/><ellipse cx="46" cy="226" rx="22" ry="9" fill="#e0b96a"/><rect x="72" y="204" width="4" height="22" fill="#8a8f98"/><rect x="68" y="222" width="12" height="8" fill="#b9bec7"/>` + STEAM,
+    s3: PLATE + `<ellipse cx="50" cy="234" rx="26" ry="10" fill="#cf9a4e"/><path d="M28 232 q22 8 44 0" stroke="#7a4a1f" stroke-width="4" fill="none"/><path d="M32 228 l36 6 M32 236 l36 -6" stroke="#fff2cc" stroke-width="2"/><circle cx="40" cy="228" r="1.5" fill="#4a7a3a"/><circle cx="56" cy="230" r="1.5" fill="#4a7a3a"/><circle cx="64" cy="227" r="1.5" fill="#4a7a3a"/>` },
+  { ja: "天ぷら", en: "Tempura",
+    s1: BOARD + `<path d="M30 222 q14 -12 24 0 q-4 10 -14 8 q-8 -2 -10 -8z" fill="#f0a0a8"/><path d="M52 220 l8 -6 M52 224 l10 -2" stroke="#f0a0a8" stroke-width="3"/><circle cx="70" cy="230" r="8" fill="#e8a020"/><circle cx="70" cy="230" r="4" fill="#f7c96b"/>`,
+    s2: POT + `<circle cx="38" cy="216" r="3" fill="#f7dfa8"/><circle cx="50" cy="212" r="4" fill="#f7dfa8"/><circle cx="62" cy="217" r="3" fill="#f7dfa8"/><path d="M36 224 q14 6 28 0" stroke="#e9b95f" stroke-width="5" fill="none"/>`,
+    s3: PLATE + `<path d="M26 232 q12 -14 22 -2 q-4 8 -12 8 q-8 0 -10 -6z" fill="#e9b95f"/><path d="M48 226 q10 -10 18 -2 q-3 7 -10 7 q-6 0 -8 -5z" fill="#dba84a"/><rect x="70" y="226" width="14" height="12" rx="3" fill="#8a5a3a"/><ellipse cx="77" cy="226" rx="7" ry="2.5" fill="#5f3a22"/>` },
+  { ja: "うどん", en: "Udon",
+    s1: BOARD + `<circle cx="34" cy="226" r="13" fill="#f5efe0"/><rect x="54" y="218" width="34" height="7" rx="3.5" fill="#c8a26b"/>`,
+    s2: POT + STEAM + `<path d="M34 208 q4 -9 8 0 M48 208 q4 -9 8 0 M60 208 q4 -9 8 0" stroke="#f5efe0" stroke-width="4" fill="none"/>`,
+    s3: STEAM + `<path d="M18 224 q32 6 64 0 l-6 20 q-26 10 -52 0z" fill="#8a5a3a"/><path d="M24 222 q7 -7 12 0 q7 -7 12 0 q7 -7 12 0 q7 -7 12 0" stroke="#f5efe0" stroke-width="5" fill="none"/><circle cx="62" cy="214" r="7" fill="#fff"/><path d="M62 214 q3 -3 0 -5 q-4 1 0 5" fill="#e88a9a" stroke="#e88a9a" stroke-width="1.5"/><rect x="34" y="206" width="4" height="8" rx="2" fill="#7ab648"/>` },
+  { ja: "餃子", en: "Gyoza",
+    s1: BOARD + `<circle cx="30" cy="228" r="10" fill="#f5efe0"/><circle cx="44" cy="230" r="10" fill="#efe8d5"/><path d="M62 222 q10 12 20 0 l-2 10 q-8 6 -16 0z" fill="#d0d8c8"/><ellipse cx="72" cy="221" rx="10" ry="3" fill="#b9c9a8"/>`,
+    s2: PAN + `<path d="M28 226 q6 -10 12 0z" fill="#f0e2c8"/><path d="M42 226 q6 -10 12 0z" fill="#f0e2c8"/><path d="M56 226 q6 -10 12 0z" fill="#f0e2c8"/>` + STEAM,
+    s3: PLATE + `<path d="M22 236 q7 -12 14 0 q-7 6 -14 0z" fill="#e9c98f"/><path d="M38 236 q7 -12 14 0 q-7 6 -14 0z" fill="#e9c98f"/><path d="M54 236 q7 -12 14 0 q-7 6 -14 0z" fill="#e9c98f"/><path d="M24 234 q5 3 10 0 M40 234 q5 3 10 0 M56 234 q5 3 10 0" stroke="#c98a3f" stroke-width="2" fill="none"/><rect x="72" y="228" width="13" height="10" rx="3" fill="#fff"/><ellipse cx="78.5" cy="230" rx="5" ry="2" fill="#5f3a22"/>` },
+  { ja: "カレーライス", en: "Curry Rice",
+    s1: BOARD + `<path d="M26 218 l10 16 l-16 -4z" fill="#e8762a"/><path d="M30 216 l4 -6" stroke="#7ab648" stroke-width="3"/><ellipse cx="56" cy="228" rx="11" ry="9" fill="#d9b98a"/><circle cx="80" cy="228" r="9" fill="#e8d5b5"/><path d="M80 219 q0 -5 3 -7" stroke="#b8a075" stroke-width="2" fill="none"/>`,
+    s2: POT + STEAM + `<path d="M30 210 q20 8 40 0 l0 6 q-20 8 -40 0z" fill="#8a5a2a"/><circle cx="40" cy="204" r="3" fill="#a06a34"/><circle cx="58" cy="202" r="4" fill="#a06a34"/>`,
+    s3: PLATE + `<path d="M22 238 q6 -12 20 -10 q8 2 8 10 q-4 6 -14 6 q-12 0 -14 -6z" fill="#fff"/><path d="M50 232 q14 -10 28 -2 l-2 10 q-14 6 -26 -2z" fill="#8a5a2a"/><rect x="60" y="230" width="7" height="5" rx="2" fill="#e8762a"/><rect x="70" y="234" width="6" height="4" rx="2" fill="#d9b98a"/>` },
+  { ja: "おにぎり", en: "Onigiri",
+    s1: BOARD + `<path d="M22 220 q13 16 26 0 l-2 14 q-11 8 -22 0z" fill="#e8e2d2"/><ellipse cx="35" cy="219" rx="12" ry="4" fill="#fff"/><rect x="60" y="216" width="24" height="24" fill="#2e3d2f"/>`,
+    s2: BOARD + `<path d="M50 204 l22 34 l-44 0z" fill="#fdfdfd"/><path d="M50 212 l14 22 l-28 0z" fill="#f0ede2" opacity="0.6"/>`,
+    s3: PLATE + `<path d="M32 216 l16 26 l-32 0z" fill="#fdfdfd"/><rect x="26" y="232" width="12" height="10" fill="#2e3d2f"/><path d="M68 220 l14 22 l-28 0z" fill="#fdfdfd"/><rect x="62" y="232" width="12" height="10" fill="#2e3d2f"/><circle cx="32" cy="222" r="2" fill="#e8483f"/>` },
+  { ja: "焼き鳥", en: "Yakitori",
+    s1: BOARD + `<rect x="24" y="222" width="12" height="12" rx="3" fill="#e8b4a0"/><rect x="40" y="224" width="11" height="11" rx="3" fill="#e8b4a0"/><rect x="56" y="222" width="10" height="6" rx="2" fill="#7ab648"/><path d="M60 240 l24 -18 M56 244 l24 -14" stroke="#c8a26b" stroke-width="2.5"/>`,
+    s2: `<rect x="20" y="230" width="60" height="12" rx="4" fill="#3f4854"/><path d="M24 220 l52 0" stroke="#c8a26b" stroke-width="2"/><circle cx="34" cy="220" r="5" fill="#c98a5b"/><circle cx="47" cy="220" r="5" fill="#c98a5b"/><circle cx="60" cy="220" r="5" fill="#7ab648"/>` + STEAM,
+    s3: PLATE + `<path d="M22 228 l56 0" stroke="#c8a26b" stroke-width="2.5"/><circle cx="34" cy="228" r="6" fill="#a05a2a"/><circle cx="48" cy="228" r="6" fill="#a05a2a"/><circle cx="61" cy="228" r="6" fill="#5a8a3a"/><path d="M22 240 l56 0" stroke="#c8a26b" stroke-width="2.5"/><circle cx="38" cy="240" r="6" fill="#a05a2a"/><circle cx="52" cy="240" r="6" fill="#a05a2a"/><circle cx="65" cy="240" r="6" fill="#a05a2a"/>` },
+  { ja: "すき焼き", en: "Sukiyaki",
+    s1: BOARD + `<path d="M22 222 q10 -6 20 0 q-2 8 -10 8 q-8 0 -10 -8z" fill="#e88a9a"/><path d="M26 224 q6 -3 12 0" stroke="#fff" stroke-width="2" fill="none"/><rect x="50" y="222" width="14" height="12" rx="2" fill="#f5efe0"/><rect x="70" y="220" width="8" height="16" rx="3" fill="#7ab648"/>`,
+    s2: STEAM + `<path d="M22 216 q28 8 56 0 l-4 22 q-24 10 -48 0z" fill="#3f2a1a"/><ellipse cx="50" cy="216" rx="28" ry="6" fill="#6a4a2a"/><path d="M32 214 q6 -4 12 0z" fill="#e88a9a"/><path d="M52 212 q6 -4 12 0z" fill="#f5efe0"/>`,
+    s3: STEAM + `<path d="M20 214 q30 9 60 0 l-5 24 q-25 10 -50 0z" fill="#3f2a1a"/><ellipse cx="50" cy="214" rx="30" ry="7" fill="#8a5a2a"/><path d="M30 212 q6 -5 14 0z" fill="#e88a9a"/><path d="M48 210 q7 -5 14 0z" fill="#e88a9a"/><rect x="62" y="206" width="9" height="8" rx="2" fill="#f5efe0"/><circle cx="84" cy="240" r="8" fill="#fff"/><circle cx="84" cy="240" r="4" fill="#e8a020"/>` },
+  { ja: "とんかつ", en: "Tonkatsu",
+    s1: BOARD + `<ellipse cx="36" cy="228" rx="16" ry="10" fill="#e8b4c0"/><ellipse cx="64" cy="232" rx="6" ry="8" fill="#fff"/><path d="M74 224 q8 10 16 0 l-1 8 q-7 5 -14 0z" fill="#f0e6d0"/>`,
+    s2: POT + `<ellipse cx="50" cy="212" rx="18" ry="8" fill="#e0b060"/><circle cx="34" cy="216" r="3" fill="#f7dfa8"/><circle cx="68" cy="214" r="3" fill="#f7dfa8"/>`,
+    s3: PLATE + `<path d="M22 236 q8 -10 20 -8 q6 2 4 8 q-6 6 -24 0z" fill="#a8d078"/><rect x="46" y="222" width="9" height="16" rx="2" fill="#d9a446"/><rect x="57" y="222" width="9" height="16" rx="2" fill="#d9a446"/><rect x="68" y="222" width="9" height="16" rx="2" fill="#d9a446"/><rect x="46" y="226" width="31" height="3" fill="#e8b4c0"/>` },
+  { ja: "海鮮丼", en: "Kaisendon",
+    s1: BOARD + `<path d="M22 224 q10 -8 20 -2 l-2 8 q-10 4 -18 -2z" fill="#f4845f"/><path d="M48 222 q10 -8 20 -2 l-2 8 q-10 4 -18 -2z" fill="#d94550"/><ellipse cx="80" cy="230" rx="10" ry="7" fill="#fdfdfd"/>`,
+    s2: `<path d="M24 226 q26 6 52 0 l-5 16 q-21 8 -42 0z" fill="#2e3d2f"/><ellipse cx="50" cy="226" rx="26" ry="6" fill="#fdfdfd"/><path d="M34 222 q6 -5 12 -1z" fill="#f4845f"/>`,
+    s3: `<path d="M22 224 q28 7 56 0 l-5 18 q-23 9 -46 0z" fill="#2e3d2f"/><ellipse cx="50" cy="224" rx="28" ry="7" fill="#fdfdfd"/><path d="M28 220 q7 -6 14 -1z" fill="#f4845f"/><path d="M44 218 q7 -6 14 -1z" fill="#d94550"/><path d="M60 220 q7 -6 14 -1z" fill="#fff" stroke="#e8e2d2"/><circle cx="38" cy="216" r="2.5" fill="#e8762a"/><circle cx="44" cy="214" r="2.5" fill="#e8762a"/><circle cx="41" cy="219" r="2.5" fill="#e8762a"/>` },
+  { ja: "たい焼き", en: "Taiyaki",
+    s1: BOARD + `<path d="M22 220 q12 14 24 0 l-2 12 q-10 7 -20 0z" fill="#f0e6d0"/><ellipse cx="34" cy="219" rx="11" ry="4" fill="#f7edd8"/><path d="M56 222 q11 12 22 0 l-2 11 q-9 6 -18 0z" fill="#6a3a3a"/><ellipse cx="67" cy="221" rx="10" ry="3.5" fill="#7a4444"/>`,
+    s2: `<rect x="22" y="212" width="56" height="14" rx="7" fill="#5a6470"/><rect x="22" y="230" width="56" height="14" rx="7" fill="#4a5460"/><path d="M30 219 q20 -10 40 0" stroke="#8a94a0" stroke-width="2" fill="none"/>` + STEAM,
+    s3: PLATE + `<path d="M24 226 q14 -14 34 -8 q10 4 10 10 q0 6 -10 10 q-20 6 -34 -8z" fill="#dba84a"/><path d="M68 222 l14 -6 l-4 12 l4 10 l-14 -8z" fill="#dba84a"/><circle cx="34" cy="224" r="2" fill="#7a4a1f"/><path d="M40 222 q6 8 0 14 M50 220 q6 9 0 17" stroke="#c98a3f" stroke-width="2" fill="none"/>` },
+  { ja: "抹茶パフェ", en: "Matcha Parfait",
+    s1: BOARD + `<path d="M22 222 q12 12 24 0 l-2 12 q-10 6 -20 0z" fill="#4a7a3a"/><ellipse cx="34" cy="221" rx="11" ry="4" fill="#5a8a4a"/><circle cx="64" cy="226" r="9" fill="#a8d890"/><path d="M76 232 q6 -12 12 0z" fill="#fff"/>`,
+    s2: `<path d="M34 200 l32 0 l-6 44 l-20 0z" fill="none" stroke="#b9c4cc" stroke-width="2.5"/><path d="M38 226 l24 0 l-3 16 l-18 0z" fill="#7ab648"/><path d="M40 216 l20 0 l-1 10 l-18 0z" fill="#f5efe0"/>`,
+    s3: `<path d="M32 196 l36 0 l-7 48 l-22 0z" fill="none" stroke="#b9c4cc" stroke-width="2.5"/><path d="M36 226 l28 0 l-4 16 l-20 0z" fill="#7ab648"/><path d="M37 214 l26 0 l-1 12 l-24 0z" fill="#f5efe0"/><path d="M36 204 l28 0 l-1 10 l-26 0z" fill="#a8d890"/><path d="M42 196 q8 -12 16 0z" fill="#fff"/><circle cx="50" cy="188" r="4" fill="#e8483f"/><rect x="58" y="182" width="3" height="16" rx="1.5" fill="#8a5a3a" transform="rotate(15 59 190)"/>` }
+];
+
+let food = { yum: 0, level: 0 };
+try {
+  const savedFood = JSON.parse(localStorage.getItem("foodProgress"));
+  if (savedFood && typeof savedFood.level === "number") food = savedFood;
+} catch (e) {}
+
+function saveFood() { localStorage.setItem("foodProgress", JSON.stringify(food)); }
+
+function updateFoodTabLabel() {
+  document.getElementById("tabFoods").textContent = "🍜 Lv." + food.level;
+}
+
+function showToast(text) {
+  const t = document.getElementById("toast");
+  t.textContent = text;
+  t.style.opacity = 1;
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => { t.style.opacity = 0; }, 2800);
+}
+
+// Add yum points. Returns the new level if we leveled up (0 if not)
+function addYum(n) {
+  if (food.level >= 45) return 0;
+  food.yum += n;
+  let leveledTo = 0;
+  while (food.yum >= LEVEL_COST && food.level < 45) {
+    food.yum -= LEVEL_COST;
+    food.level++;
+    leveledTo = food.level;
+  }
+  saveFood();
+  updateFoodTabLabel();
+  if (leveledTo) {
+    const dish = FOODS[Math.floor((leveledTo - 1) / 3)];
+    const stageMsgs = [
+      dish.en + ": ingredients prepped! 🥬",
+      dish.en + " is cooking! 🍳",
+      dish.en + " is ready to eat! 🎉"
+    ];
+    let msg = "🍜 Food Level " + leveledTo + "! " + stageMsgs[(leveledTo - 1) % 3];
+    if (TIER_UNLOCK.indexOf(leveledTo) > 0) msg += " 🗣️ New Talk level unlocked!";
+    showToast(msg);
+  }
+  if (document.getElementById("screenFoods").classList.contains("active")) renderFoods();
+  return leveledTo;
+}
+
+function foodTaskText() {
+  if (food.level >= 45) return "🎉 All 45 levels done — you've eaten your way across Japan!";
+  const dish = FOODS[Math.floor(food.level / 3)];
+  return "Up next: " + dish.en + " (" + dish.ja + ") — " + STAGE_NAMES[food.level % 3];
+}
+
+function renderFoodStatus() {
+  document.getElementById("foodLevelText").textContent = "🍜 Food Level " + food.level + " / 45";
+  document.getElementById("foodTask").textContent = foodTaskText();
+  document.getElementById("yumFill").style.width = (food.level >= 45 ? 100 : food.yum * 100 / LEVEL_COST) + "%";
+  document.getElementById("yumNote").textContent = food.level >= 45 ? "" :
+    "😋 Yum Points " + food.yum + "/" + LEVEL_COST + " (⭕ perfect +2 · 🔶 close +1 · 🗣️ talk clear +5)";
+}
+
+function renderFoods() {
+  renderFoodStatus();
+  let svg = `<rect width="1560" height="260" fill="#fdf3e3"/><rect y="260" width="1560" height="60" fill="#c89b66"/><rect y="260" width="1560" height="7" fill="#b3854f"/>`;
+  const target = food.level < 45 ? Math.floor(food.level / 3) : -1;
+  FOODS.forEach((f, i) => {
+    const stage = Math.max(0, Math.min(3, food.level - i * 3));
+    let parts = "";
+    if (stage === 0) {
+      parts = `<ellipse cx="50" cy="240" rx="30" ry="10" fill="none" stroke="#d8c4a4" stroke-dasharray="5 4" stroke-width="2"/>`;
+    } else if (stage === 1) {
+      parts = f.s1;
+    } else if (stage === 2) {
+      parts = f.s2;
+    } else {
+      parts = f.s3;
+    }
+    if (i === target) parts += `<text x="50" y="170" font-size="18" text-anchor="middle">🍳</text>`;
+    const nameColor = stage === 0 ? "#a08a68" : "#5f3a22";
+    parts += `<text x="50" y="282" text-anchor="middle" font-size="10" font-weight="bold" fill="${nameColor}">${f.ja}</text>`;
+    parts += `<text x="50" y="295" text-anchor="middle" font-size="8.5" fill="${nameColor}">${f.en}</text>`;
+    parts += `<text x="50" y="308" text-anchor="middle" font-size="9" fill="#e8a020">${"★".repeat(stage)}${"☆".repeat(3 - stage)}</text>`;
+    svg += `<g transform="translate(${i * 104},0)">` + parts + "</g>";
+  });
+  document.getElementById("foodSvg").innerHTML = svg;
+  document.getElementById("tierInfo").innerHTML = "<b>🗣️ Talk levels</b><br>" + TALK_LEVELS.map((lv, i) =>
+    (food.level >= TIER_UNLOCK[i] ? "✅ " + lv.name : "🔒 " + lv.name + " (opens at Food Level " + TIER_UNLOCK[i] + ")")
+  ).join("<br>");
+}
+
+function resetFoods() {
+  if (!confirm("Restart your food journey from zero?")) return;
+  food = { yum: 0, level: 0 };
+  saveFood();
+  updateFoodTabLabel();
+  renderFoods();
+}
+
 // ===== Tab switching =====
 function switchTab(tab) {
-  const tabs = { phrases: "Phrases", grammar: "Grammar", talk: "Talk", pitch: "Pitch" };
+  const tabs = { phrases: "Phrases", grammar: "Grammar", talk: "Talk", pitch: "Pitch", foods: "Foods" };
   for (const key in tabs) {
     document.getElementById("screen" + tabs[key]).classList.toggle("active", tab === key);
     document.getElementById("tab" + tabs[key]).classList.toggle("active", tab === key);
   }
   if (tab === "talk") showTalkLevels();
+  if (tab === "foods") renderFoods();
 }
 
 // Initial render
 renderCategoryButtons();
 renderCard();
 renderPitchList();
+updateFoodTabLabel();
 </script>
 
 </body>
