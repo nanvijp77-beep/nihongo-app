@@ -251,6 +251,7 @@
   }
   .pitch-half .kanji { font-size: 1.7rem; font-weight: bold; color: var(--sub); }
   .pitch-half .en { font-size: 0.8rem; color: #888; margin: 2px 0 4px; }
+  .pitch-half .phrase { font-size: 0.75rem; color: #999; margin-top: 6px; line-height: 1.5; }
   .mini-speak {
     border: none;
     background: var(--yellow);
@@ -335,7 +336,7 @@
       Every syllable is either <b style="color:var(--main)">High</b> or <b style="color:var(--sub)">Low</b>.
       Same sounds + different melody = totally different word 😲<br>
       The mic can't hear melody (yet 😅), so here's the trick:
-      tap 🔊, listen closely, and copy the tune — karaoke style 🎤<br>
+      tap 🔊 to hear the word in a short sentence, listen closely, and copy the tune — karaoke style 🎤<br>
       <small style="color:#999">Don't stress: context saves you 99% of the time. Copying the melody just makes you sound extra natural!</small>
     </div>
     <div id="pitchList"></div>
@@ -590,19 +591,29 @@ function startPronunciationCheck() {
 
 // ===== Pitch accent (listen & imitate) =====
 // pattern: 1 = High, 0 = Low (one number per syllable)
+// say: short sentence for the speaker — a lone kanji can be misread,
+// but inside a sentence the reading and pitch come out right
 const PITCH_PAIRS = [
   { kana: "あめ", moras: ["a", "me"],
-    a: { kanji: "雨", en: "rain", pattern: [1, 0] },
-    b: { kanji: "飴", en: "candy", pattern: [0, 1] } },
+    a: { kanji: "雨", en: "rain", pattern: [1, 0],
+         say: "雨が降っています", sayEn: "It's raining" },
+    b: { kanji: "飴", en: "candy", pattern: [0, 1],
+         say: "飴をなめます", sayEn: "I eat a candy" } },
   { kana: "はし", moras: ["ha", "shi"],
-    a: { kanji: "箸", en: "chopsticks", pattern: [1, 0] },
-    b: { kanji: "橋", en: "bridge", pattern: [0, 1] } },
+    a: { kanji: "箸", en: "chopsticks", pattern: [1, 0],
+         say: "箸でごはんを食べます", sayEn: "I eat rice with chopsticks" },
+    b: { kanji: "橋", en: "bridge", pattern: [0, 1],
+         say: "橋を渡ります", sayEn: "I cross the bridge" } },
   { kana: "かき", moras: ["ka", "ki"],
-    a: { kanji: "牡蠣", en: "oyster", pattern: [1, 0] },
-    b: { kanji: "柿", en: "persimmon", pattern: [0, 1] } },
+    a: { kanji: "牡蠣", en: "oyster", pattern: [1, 0],
+         say: "牡蠣はおいしいです", sayEn: "Oysters are delicious" },
+    b: { kanji: "柿", en: "persimmon", pattern: [0, 1],
+         say: "柿は甘いです", sayEn: "Persimmons are sweet" } },
   { kana: "いま", moras: ["i", "ma"],
-    a: { kanji: "今", en: "now", pattern: [1, 0] },
-    b: { kanji: "居間", en: "living room", pattern: [0, 1] } }
+    a: { kanji: "今", en: "now", pattern: [1, 0],
+         say: "今、何時ですか", sayEn: "What time is it now?" },
+    b: { kanji: "居間", en: "living room", pattern: [0, 1],
+         say: "居間でテレビを見ます", sayEn: "I watch TV in the living room" } }
 ];
 
 function pitchSvg(moras, pattern) {
@@ -632,6 +643,7 @@ function renderPitchList() {
         '<div class="en">' + side.en + "</div>" +
         pitchSvg(p.moras, side.pattern) + "<br>" +
         '<button class="mini-speak" onclick="speakPitch(' + pi + "," + si + ')">🔊</button>' +
+        '<div class="phrase">' + side.say + "<br><small>" + side.sayEn + "</small></div>" +
         "</div>";
     });
     html += "</div></div>";
@@ -641,7 +653,7 @@ function renderPitchList() {
 
 function speakPitch(pairIndex, sideIndex) {
   const p = PITCH_PAIRS[pairIndex];
-  speak(sideIndex === 0 ? p.a.kanji : p.b.kanji);
+  speak(sideIndex === 0 ? p.a.say : p.b.say);
 }
 
 // ===== Tab switching =====
