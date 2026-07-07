@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nihongo Time! — Learn Japanese</title>
+<style>
+  :root {
+    --main: #d94f5c;   /* soft vermillion red */
+    --sub: #4a5fa5;    /* indigo blue */
+    --yellow: #f4a629;
+    --bg: #fdf6ee;
+    --card: #ffffff;
+    --text: #333333;
+    --ok: #2a9d8f;
+    --ng: #e76f51;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  header {
+    width: 100%;
+    background: linear-gradient(135deg, var(--main), var(--yellow));
+    color: #fff;
+    text-align: center;
+    padding: 16px 8px;
+  }
+  header h1 { font-size: 1.3rem; }
+  header p { font-size: 0.8rem; opacity: 0.9; margin-top: 4px; }
+
+  nav {
+    display: flex;
+    gap: 6px;
+    margin: 16px 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  nav button {
+    padding: 8px 14px;
+    border: 2px solid var(--main);
+    border-radius: 24px;
+    background: #fff;
+    color: var(--main);
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  nav button.active {
+    background: var(--main);
+    color: #fff;
+  }
+
+  .voice-settings {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+  }
+  .voice-settings select {
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    max-width: 220px;
+  }
+  .voice-settings .try-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 8px;
+    background: var(--yellow);
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  main {
+    width: 100%;
+    max-width: 480px;
+    padding: 0 16px 32px;
+    flex: 1;
+  }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ===== Kana tab ===== */
+  .toggle-row {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .toggle-row button {
+    padding: 6px 14px;
+    border: 1px solid var(--sub);
+    border-radius: 16px;
+    background: #fff;
+    color: var(--sub);
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .toggle-row button.active {
+    background: var(--sub);
+    color: #fff;
+    font-weight: bold;
+  }
+  .kana-display {
+    background: var(--card);
+    border: 3px solid var(--sub);
+    border-radius: 16px;
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 12px;
+    min-height: 96px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .kana-display .big { font-size: 2.6rem; font-weight: bold; color: var(--sub); }
+  .kana-display .small { font-size: 1rem; color: #888; }
+  .kana-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .kana-grid button {
+    padding: 8px 2px;
+    border: 1px solid #e5d8c8;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 1.15rem;
+    font-weight: bold;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .kana-grid button small { display: block; font-size: 0.65rem; color: #999; font-weight: normal; }
+  .kana-grid button:active { background: var(--bg); }
+  .kana-grid .empty { visibility: hidden; }
+
+  .challenge-box {
+    background: var(--card);
+    border: 3px solid var(--main);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .challenge-box h3 { color: var(--main); font-size: 1rem; margin-bottom: 8px; }
+  .challenge-box .word { font-size: 2.2rem; font-weight: bold; color: var(--main); }
+  .challenge-box .meaning { font-size: 0.85rem; color: #888; margin: 4px 0 10px; }
+
+  .speak-btn {
+    border: none;
+    background: var(--yellow);
+    color: #fff;
+    font-size: 1.3rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  .speak-btn:active { transform: scale(0.92); }
+  .card-btns { display: flex; gap: 12px; justify-content: center; }
+  .mic-btn {
+    border: none;
+    background: var(--ok);
+    color: #fff;
+    font-size: 1.3rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  .mic-btn:active { transform: scale(0.92); }
+  .mic-btn.listening {
+    background: var(--ng);
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(231,111,81,0.5); }
+    100% { box-shadow: 0 0 0 14px rgba(231,111,81,0); }
+  }
+  .next-word-btn {
+    margin-top: 10px;
+    padding: 10px 22px;
+    border: none;
+    border-radius: 12px;
+    background: var(--sub);
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .pron-feedback {
+    min-height: 48px;
+    margin-top: 12px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: bold;
+    white-space: pre-line;
+  }
+
+  /* ===== Phrases tab ===== */
+  .category-select {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .category-select button {
+    padding: 6px 12px;
+    border: 1px solid var(--yellow);
+    border-radius: 16px;
+    background: #fff;
+    color: #b07600;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .category-select button.active {
+    background: var(--yellow);
+    color: #fff;
+    font-weight: bold;
+  }
+  .flip-card {
+    perspective: 1000px;
+    width: 100%;
+    height: 260px;
+    cursor: pointer;
+  }
+  .flip-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s;
+    transform-style: preserve-3d;
+  }
+  .flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+  .flip-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    padding: 16px;
+  }
+  .flip-front {
+    background: var(--card);
+    border: 3px solid var(--main);
+  }
+  .flip-back {
+    background: var(--main);
+    color: #fff;
+    transform: rotateY(180deg);
+  }
+  .flip-front .word { font-size: 1.9rem; font-weight: bold; color: var(--main); text-align: center; }
+  .flip-front .kana-sub { font-size: 1rem; color: #999; }
+  .flip-back .word { font-size: 1.5rem; font-weight: bold; text-align: center; }
+  .flip-face .hint { font-size: 0.78rem; opacity: 0.6; text-align: center; }
+  .flip-back .reading { font-size: 1rem; opacity: 0.9; }
+
+  .card-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+  }
+  .card-nav button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 12px;
+    background: var(--yellow);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .card-nav button:disabled { opacity: 0.4; }
+  .card-counter { font-size: 0.95rem; color: #888; }
+
+  /* ===== Pitch tab ===== */
+  .pitch-intro {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 0.92rem;
+    line-height: 1.7;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-bottom: 14px;
+  }
+  .pitch-pair {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 14px;
+  }
+  .pitch-pair h3 {
+    text-align: center;
+    color: var(--main);
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+  }
+  .pitch-pair .pair-row { display: flex; gap: 10px; }
+  .pitch-half {
+    flex: 1;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+  .pitch-half .kanji { font-size: 1.7rem; font-weight: bold; color: var(--sub); }
+  .pitch-half .en { font-size: 0.8rem; color: #888; margin: 2px 0 4px; }
+  .mini-speak {
+    border: none;
+    background: var(--yellow);
+    color: #fff;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 0.95rem;
+  }
+
+  footer {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+    font-size: 0.75rem;
+    color: #aaa;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🇯🇵 Nihongo Time!</h1>
+  <p>Your friendly Japanese practice corner — one tiny step a day 🌱</p>
+</header>
+
+<nav>
+  <button id="tabKana" class="active" onclick="switchTab('kana')">🔤 Kana</button>
+  <button id="tabPhrases" onclick="switchTab('phrases')">💬 Phrases</button>
+  <button id="tabPitch" onclick="switchTab('pitch')">🎵 Pitch</button>
+</nav>
+
+<main>
+  <!-- Voice settings -->
+  <div class="voice-settings">
+    <span>🗣️Voice:</span>
+    <select id="voiceSelect"></select>
+    <select id="rateSelect">
+      <option value="0.7">Slow</option>
+      <option value="0.9" selected>Normal</option>
+      <option value="1.1">Fast</option>
+    </select>
+    <button class="try-btn" onclick="speak('こんにちは！ようこそ、日本語の世界へ！')">Test voice</button>
+  </div>
+
+  <!-- ===== Kana screen ===== -->
+  <section id="screenKana" class="screen active">
+    <div class="toggle-row">
+      <button id="scriptHira" class="active" onclick="setScript('hira')">Hiragana あ</button>
+      <button id="scriptKata" onclick="setScript('kata')">Katakana ア</button>
+    </div>
+    <div class="toggle-row">
+      <button id="setBasic" class="active" onclick="setKanaSet('basic')">Basic 46</button>
+      <button id="setDakuten" onclick="setKanaSet('dakuten')">With ゛゜ marks</button>
+    </div>
+    <div class="kana-display" id="kanaDisplay">
+      <div class="big">あ</div>
+      <div class="small">Tap any kana below to hear it 👇</div>
+    </div>
+    <div class="kana-grid" id="kanaGrid"></div>
+
+    <div class="challenge-box">
+      <h3>🎤 Reading Challenge</h3>
+      <div class="word" id="challengeWord"></div>
+      <div class="meaning" id="challengeMeaning"></div>
+      <div class="card-btns">
+        <button class="speak-btn" onclick="speakChallenge()">🔊</button>
+        <button class="mic-btn" id="challengeMic" onclick="startChallengeCheck()">🎤</button>
+      </div>
+      <div class="pron-feedback" id="challengeFeedback">Can you read it out loud? Tap 🎤 and go for it!</div>
+      <button class="next-word-btn" onclick="nextChallenge()">Next word →</button>
+    </div>
+  </section>
+
+  <!-- ===== Phrases screen ===== -->
+  <section id="screenPhrases" class="screen">
+    <div class="category-select" id="categorySelect"></div>
+    <div class="flip-card" id="flipCard" onclick="flipCard()">
+      <div class="flip-inner">
+        <div class="flip-face flip-front">
+          <div class="word" id="cardFront"></div>
+          <div class="kana-sub" id="cardKana"></div>
+          <div class="card-btns">
+            <button class="speak-btn" onclick="event.stopPropagation(); speakCurrentCard()">🔊</button>
+            <button class="mic-btn" id="micBtn" onclick="event.stopPropagation(); startPronunciationCheck()">🎤</button>
+          </div>
+          <div class="hint">🔊 listen · 🎤 say it · tap card for English</div>
+        </div>
+        <div class="flip-face flip-back">
+          <div class="word" id="cardBack"></div>
+          <div class="reading" id="cardReading"></div>
+          <button class="speak-btn" onclick="event.stopPropagation(); speakCurrentCard()">🔊</button>
+          <div class="hint">Tap to flip back</div>
+        </div>
+      </div>
+    </div>
+    <div class="pron-feedback" id="pronFeedback"></div>
+    <div class="card-nav">
+      <button id="btnPrev" onclick="moveCard(-1)">← Prev</button>
+      <span class="card-counter" id="cardCounter"></span>
+      <button id="btnNext" onclick="moveCard(1)">Next →</button>
+    </div>
+  </section>
+
+  <!-- ===== Pitch screen ===== -->
+  <section id="screenPitch" class="screen">
+    <div class="pitch-intro">
+      <b>🎵 Japanese words have a melody!</b><br>
+      Every syllable is either <b style="color:var(--main)">High</b> or <b style="color:var(--sub)">Low</b>.
+      Same sounds + different melody = totally different word 😲<br>
+      The mic can't hear melody (yet 😅), so here's the trick:
+      tap 🔊, listen closely, and copy the tune — karaoke style 🎤<br>
+      <small style="color:#999">Don't stress: context saves you 99% of the time. Copying the melody just makes you sound extra natural!</small>
+    </div>
+    <div id="pitchList"></div>
+  </section>
+</main>
+
+<footer>
+  Phase 1 — Kana · Phrases · Pitch 🎤<br>
+  📱 On iPhone? Safari works best for the mic!
+</footer>
+
+<script>
+// ===== Kana data (hiragana; katakana is auto-generated) =====
+// null = empty cell to keep the classic gojūon chart layout
+const KANA_BASIC = [
+  ["あ","a"],["い","i"],["う","u"],["え","e"],["お","o"],
+  ["か","ka"],["き","ki"],["く","ku"],["け","ke"],["こ","ko"],
+  ["さ","sa"],["し","shi"],["す","su"],["せ","se"],["そ","so"],
+  ["た","ta"],["ち","chi"],["つ","tsu"],["て","te"],["と","to"],
+  ["な","na"],["に","ni"],["ぬ","nu"],["ね","ne"],["の","no"],
+  ["は","ha"],["ひ","hi"],["ふ","fu"],["へ","he"],["ほ","ho"],
+  ["ま","ma"],["み","mi"],["む","mu"],["め","me"],["も","mo"],
+  ["や","ya"],null,["ゆ","yu"],null,["よ","yo"],
+  ["ら","ra"],["り","ri"],["る","ru"],["れ","re"],["ろ","ro"],
+  ["わ","wa"],null,null,null,["を","wo"],
+  ["ん","n"],null,null,null,null
+];
+const KANA_DAKUTEN = [
+  ["が","ga"],["ぎ","gi"],["ぐ","gu"],["げ","ge"],["ご","go"],
+  ["ざ","za"],["じ","ji"],["ず","zu"],["ぜ","ze"],["ぞ","zo"],
+  ["だ","da"],["ぢ","ji"],["づ","zu"],["で","de"],["ど","do"],
+  ["ば","ba"],["び","bi"],["ぶ","bu"],["べ","be"],["ぼ","bo"],
+  ["ぱ","pa"],["ぴ","pi"],["ぷ","pu"],["ぺ","pe"],["ぽ","po"]
+];
+
+function toKatakana(s) {
+  return s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+}
+
+let script = "hira";   // hira | kata
+let kanaSet = "basic"; // basic | dakuten
+
+function setScript(s) {
+  script = s;
+  document.getElementById("scriptHira").classList.toggle("active", s === "hira");
+  document.getElementById("scriptKata").classList.toggle("active", s === "kata");
+  renderKanaGrid();
+  startChallengeSet();
+}
+function setKanaSet(s) {
+  kanaSet = s;
+  document.getElementById("setBasic").classList.toggle("active", s === "basic");
+  document.getElementById("setDakuten").classList.toggle("active", s === "dakuten");
+  renderKanaGrid();
+}
+
+function renderKanaGrid() {
+  const grid = document.getElementById("kanaGrid");
+  grid.innerHTML = "";
+  const data = kanaSet === "basic" ? KANA_BASIC : KANA_DAKUTEN;
+  data.forEach(item => {
+    const btn = document.createElement("button");
+    if (!item) {
+      btn.className = "empty";
+      grid.appendChild(btn);
+      return;
+    }
+    const kana = script === "hira" ? item[0] : toKatakana(item[0]);
+    btn.innerHTML = kana + "<small>" + item[1] + "</small>";
+    btn.onclick = () => {
+      document.getElementById("kanaDisplay").innerHTML =
+        '<div class="big">' + kana + '</div><div class="small">' + item[1] + "</div>";
+      speak(kana);
+    };
+    grid.appendChild(btn);
+  });
+}
+
+// ===== Reading Challenge (kana words + mic) =====
+const HIRA_WORDS = [
+  { word: "ねこ", en: "cat", accepts: ["猫"] },
+  { word: "いぬ", en: "dog", accepts: ["犬"] },
+  { word: "みず", en: "water", accepts: ["水"] },
+  { word: "さかな", en: "fish", accepts: ["魚"] },
+  { word: "やま", en: "mountain", accepts: ["山"] },
+  { word: "そら", en: "sky", accepts: ["空"] },
+  { word: "はな", en: "flower", accepts: ["花", "鼻"] },
+  { word: "おちゃ", en: "green tea", accepts: ["お茶"] },
+  { word: "でんしゃ", en: "train", accepts: ["電車"] },
+  { word: "ともだち", en: "friend", accepts: ["友達", "友だち"] }
+];
+const KATA_WORDS = [
+  { word: "コーヒー", en: "coffee", accepts: ["珈琲"] },
+  { word: "ラーメン", en: "ramen", accepts: ["拉麺"] },
+  { word: "テレビ", en: "TV", accepts: [] },
+  { word: "カメラ", en: "camera", accepts: [] },
+  { word: "アイス", en: "ice cream", accepts: [] },
+  { word: "タクシー", en: "taxi", accepts: [] },
+  { word: "ホテル", en: "hotel", accepts: [] },
+  { word: "バス", en: "bus", accepts: [] },
+  { word: "パン", en: "bread", accepts: [] },
+  { word: "ケーキ", en: "cake", accepts: [] }
+];
+
+let challengeList = [];
+let challengeIndex = 0;
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startChallengeSet() {
+  challengeList = shuffle(script === "hira" ? HIRA_WORDS : KATA_WORDS);
+  challengeIndex = 0;
+  renderChallenge();
+}
+function renderChallenge() {
+  const c = challengeList[challengeIndex];
+  document.getElementById("challengeWord").textContent = c.word;
+  document.getElementById("challengeMeaning").textContent = "(" + c.en + ")";
+  setFeedback("challengeFeedback", "Can you read it out loud? Tap 🎤 and go for it!", "var(--text)");
+}
+function nextChallenge() {
+  challengeIndex = (challengeIndex + 1) % challengeList.length;
+  renderChallenge();
+}
+function speakChallenge() {
+  speak(challengeList[challengeIndex].word);
+}
+
+// ===== Phrase data (daily conversation) =====
+const PHRASES = [
+  // Greetings
+  { ja: "こんにちは", kana: "こんにちは", romaji: "Konnichiwa", en: "Hello / Hi", cat: "Greetings", accepts: ["こんにちわ"] },
+  { ja: "おはようございます", kana: "おはようございます", romaji: "Ohayō gozaimasu", en: "Good morning", cat: "Greetings", accepts: ["おはよう"] },
+  { ja: "こんばんは", kana: "こんばんは", romaji: "Konbanwa", en: "Good evening", cat: "Greetings", accepts: ["こんばんわ"] },
+  { ja: "ありがとうございます", kana: "ありがとうございます", romaji: "Arigatō gozaimasu", en: "Thank you (polite)", cat: "Greetings", accepts: ["ありがとう"] },
+  { ja: "すみません", kana: "すみません", romaji: "Sumimasen", en: "Excuse me / Sorry", cat: "Greetings", accepts: [] },
+  { ja: "はじめまして", kana: "はじめまして", romaji: "Hajimemashite", en: "Nice to meet you", cat: "Greetings", accepts: ["初めまして"] },
+  { ja: "お元気ですか", kana: "おげんきですか", romaji: "O-genki desu ka?", en: "How are you?", cat: "Greetings", accepts: ["おげんきですか"] },
+  { ja: "またね", kana: "またね", romaji: "Mata ne", en: "See you!", cat: "Greetings", accepts: [] },
+  // Restaurant
+  { ja: "これをください", kana: "これをください", romaji: "Kore o kudasai", en: "This one, please", cat: "Restaurant", accepts: ["これを下さい"] },
+  { ja: "おすすめは何ですか", kana: "おすすめはなんですか", romaji: "Osusume wa nan desu ka?", en: "What do you recommend?", cat: "Restaurant", accepts: ["おすすめはなんですか", "オススメは何ですか"] },
+  { ja: "お水をください", kana: "おみずをください", romaji: "O-mizu o kudasai", en: "Water, please", cat: "Restaurant", accepts: ["おみずをください", "お水を下さい"] },
+  { ja: "おいしい！", kana: "おいしい", romaji: "Oishii!", en: "Delicious!", cat: "Restaurant", accepts: ["美味しい"] },
+  { ja: "お会計お願いします", kana: "おかいけいおねがいします", romaji: "O-kaikei onegai shimasu", en: "Check, please", cat: "Restaurant", accepts: ["お会計をお願いします", "おかいけいおねがいします"] },
+  { ja: "いただきます", kana: "いただきます", romaji: "Itadakimasu", en: "Let's eat! (said before a meal)", cat: "Restaurant", accepts: ["頂きます"] },
+  { ja: "ごちそうさまでした", kana: "ごちそうさまでした", romaji: "Gochisōsama deshita", en: "Thanks for the meal (said after)", cat: "Restaurant", accepts: ["ご馳走様でした"] },
+  // Shopping
+  { ja: "いくらですか", kana: "いくらですか", romaji: "Ikura desu ka?", en: "How much is it?", cat: "Shopping", accepts: ["幾らですか"] },
+  { ja: "これにします", kana: "これにします", romaji: "Kore ni shimasu", en: "I'll take this one", cat: "Shopping", accepts: [] },
+  { ja: "カードは使えますか", kana: "カードはつかえますか", romaji: "Kādo wa tsukaemasu ka?", en: "Can I pay by card?", cat: "Shopping", accepts: ["カードはつかえますか"] },
+  { ja: "袋をください", kana: "ふくろをください", romaji: "Fukuro o kudasai", en: "A bag, please", cat: "Shopping", accepts: ["ふくろをください", "袋を下さい"] },
+  { ja: "見ているだけです", kana: "みているだけです", romaji: "Mite iru dake desu", en: "Just looking, thanks", cat: "Shopping", accepts: ["みているだけです", "見てるだけです"] },
+  { ja: "ちょっと高いですね", kana: "ちょっとたかいですね", romaji: "Chotto takai desu ne", en: "A bit pricey, huh", cat: "Shopping", accepts: ["ちょっとたかいですね"] },
+  // Directions
+  { ja: "駅はどこですか", kana: "えきはどこですか", romaji: "Eki wa doko desu ka?", en: "Where is the station?", cat: "Directions", accepts: ["えきはどこですか"] },
+  { ja: "トイレはどこですか", kana: "トイレはどこですか", romaji: "Toire wa doko desu ka?", en: "Where is the bathroom?", cat: "Directions", accepts: [] },
+  { ja: "まっすぐです", kana: "まっすぐです", romaji: "Massugu desu", en: "Go straight", cat: "Directions", accepts: ["真っ直ぐです"] },
+  { ja: "右です", kana: "みぎです", romaji: "Migi desu", en: "To the right", cat: "Directions", accepts: ["みぎです"] },
+  { ja: "左です", kana: "ひだりです", romaji: "Hidari desu", en: "To the left", cat: "Directions", accepts: ["ひだりです"] },
+  { ja: "近いですか", kana: "ちかいですか", romaji: "Chikai desu ka?", en: "Is it close?", cat: "Directions", accepts: ["ちかいですか"] },
+  { ja: "ここはどこですか", kana: "ここはどこですか", romaji: "Koko wa doko desu ka?", en: "Where am I?", cat: "Directions", accepts: [] }
+];
+
+const CATEGORIES = ["All", "Greetings", "Restaurant", "Shopping", "Directions"];
+
+let currentCategory = "All";
+let cardList = [];
+let cardIndex = 0;
+
+function getPhrasesByCategory(cat) {
+  return cat === "All" ? PHRASES : PHRASES.filter(w => w.cat === cat);
+}
+
+function renderCategoryButtons() {
+  const box = document.getElementById("categorySelect");
+  box.innerHTML = "";
+  CATEGORIES.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.textContent = cat;
+    if (cat === currentCategory) btn.classList.add("active");
+    btn.onclick = () => {
+      currentCategory = cat;
+      cardIndex = 0;
+      renderCategoryButtons();
+      renderCard();
+    };
+    box.appendChild(btn);
+  });
+}
+
+function renderCard() {
+  cardList = getPhrasesByCategory(currentCategory);
+  const w = cardList[cardIndex];
+  const card = document.getElementById("flipCard");
+  card.classList.remove("flipped");
+  // wait a moment so the back face doesn't change mid-flip
+  setTimeout(() => {
+    document.getElementById("cardFront").textContent = w.ja;
+    document.getElementById("cardKana").textContent = w.kana;
+    document.getElementById("cardBack").textContent = w.en;
+    document.getElementById("cardReading").textContent = w.romaji;
+  }, 120);
+  document.getElementById("cardCounter").textContent = (cardIndex + 1) + " / " + cardList.length;
+  document.getElementById("btnPrev").disabled = cardIndex === 0;
+  document.getElementById("btnNext").disabled = cardIndex === cardList.length - 1;
+}
+
+function flipCard() {
+  document.getElementById("flipCard").classList.toggle("flipped");
+}
+
+function moveCard(dir) {
+  const next = cardIndex + dir;
+  if (next < 0 || next >= cardList.length) return;
+  cardIndex = next;
+  document.getElementById("pronFeedback").textContent = "";
+  renderCard();
+}
+
+// ===== Text-to-speech (Japanese voices, user-selectable) =====
+let jpVoices = [];
+
+function loadVoiceList() {
+  jpVoices = speechSynthesis.getVoices().filter(v => v.lang.startsWith("ja"));
+  const sel = document.getElementById("voiceSelect");
+  sel.innerHTML = "";
+  if (jpVoices.length === 0) {
+    const opt = document.createElement("option");
+    opt.textContent = "No Japanese voice found";
+    sel.appendChild(opt);
+    return;
+  }
+  jpVoices.forEach((v, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = v.name.replace("Microsoft ", "").replace(" - Japanese (Japan)", "");
+    sel.appendChild(opt);
+  });
+  const saved = localStorage.getItem("jpVoiceName");
+  const savedIndex = jpVoices.findIndex(v => v.name === saved);
+  sel.value = savedIndex >= 0 ? savedIndex : 0;
+}
+
+function speak(text) {
+  if (!("speechSynthesis" in window)) {
+    alert("Sorry, this browser doesn't support speech!");
+    return;
+  }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ja-JP";
+  u.rate = parseFloat(document.getElementById("rateSelect").value);
+  const sel = document.getElementById("voiceSelect");
+  const voice = jpVoices[parseInt(sel.value)];
+  if (voice) {
+    u.voice = voice;
+    localStorage.setItem("jpVoiceName", voice.name);
+  }
+  speechSynthesis.speak(u);
+}
+
+function speakCurrentCard() {
+  speak(cardList[cardIndex].ja);
+}
+
+if ("speechSynthesis" in window) {
+  loadVoiceList();
+  speechSynthesis.onvoiceschanged = loadVoiceList;
+}
+
+// ===== Pronunciation check (speech recognition) =====
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+// Normalize for comparison: NFKC, strip punctuation/spaces, katakana -> hiragana
+function normalizeJa(s) {
+  return s.normalize("NFKC")
+    .toLowerCase()
+    .replace(/[。、．，！？!?.,「」『』・\s]/g, "")
+    .replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+}
+
+function levenshtein(a, b) {
+  const m = [];
+  for (let i = 0; i <= b.length; i++) m[i] = [i];
+  for (let j = 0; j <= a.length; j++) m[0][j] = j;
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      m[i][j] = Math.min(
+        m[i - 1][j] + 1,
+        m[i][j - 1] + 1,
+        m[i - 1][j - 1] + (b[i - 1] === a[j - 1] ? 0 : 1)
+      );
+    }
+  }
+  return m[b.length][a.length];
+}
+function similarity(a, b) {
+  if (!a.length && !b.length) return 1;
+  return 1 - levenshtein(a, b) / Math.max(a.length, b.length);
+}
+
+function setFeedback(id, text, color) {
+  const fb = document.getElementById(id);
+  fb.textContent = text;
+  fb.style.color = color || "var(--text)";
+}
+
+// Compare what we heard against all accepted spellings, keep the best score
+function bestMatch(results, targets) {
+  let best = "", bestScore = 0;
+  const normTargets = targets.map(normalizeJa);
+  for (const alt of results) {
+    const heard = normalizeJa(alt.transcript);
+    for (const t of normTargets) {
+      const score = similarity(heard, t);
+      if (score > bestScore) { bestScore = score; best = alt.transcript; }
+    }
+  }
+  return { best, bestScore };
+}
+
+function runRecognition(targets, displayTarget, feedbackId, micBtnId) {
+  if (!SR) {
+    setFeedback(feedbackId, "This browser doesn't support the mic 😢\nTry Chrome (Android) or Safari (iPhone)!", "var(--ng)");
+    return;
+  }
+  if (location.protocol === "file:") {
+    setFeedback(feedbackId, "The mic only works on the online (https) version.\nOpen the app's web address on your phone 📱", "var(--ng)");
+    return;
+  }
+  const micBtn = micBtnId ? document.getElementById(micBtnId) : null;
+  const recog = new SR();
+  recog.lang = "ja-JP";
+  recog.interimResults = false;
+  recog.maxAlternatives = 3;
+
+  if (micBtn) micBtn.classList.add("listening");
+  setFeedback(feedbackId, "👂 Listening... say 「" + displayTarget + "」!", "var(--yellow)");
+
+  recog.onresult = (e) => {
+    const { best, bestScore } = bestMatch(e.results[0], targets);
+    if (bestScore >= 0.85) {
+      setFeedback(feedbackId, "⭕ Perfect! You nailed it! 🎉\n(I heard: " + best + ")", "var(--ok)");
+    } else if (bestScore >= 0.6) {
+      setFeedback(feedbackId, "🔶 Sooo close! One more try 💪\n(I heard: " + best + ")", "var(--yellow)");
+    } else {
+      setFeedback(feedbackId, "❌ Hmm, I didn't quite catch that.\n(I heard: " + (best || "nothing") + ")\nTap 🔊 to hear it again!", "var(--ng)");
+    }
+  };
+  recog.onerror = (e) => {
+    if (e.error === "not-allowed") {
+      setFeedback(feedbackId, "I need mic permission! 🙏\nTap 'Allow' when your browser asks", "var(--ng)");
+    } else if (e.error === "no-speech") {
+      setFeedback(feedbackId, "I couldn't hear anything 👂\nTap 🎤 again and speak up a little!", "var(--ng)");
+    } else {
+      setFeedback(feedbackId, "Mic error (" + e.error + ") — try again!", "var(--ng)");
+    }
+  };
+  recog.onend = () => { if (micBtn) micBtn.classList.remove("listening"); };
+  recog.start();
+}
+
+function startPronunciationCheck() {
+  const w = cardList[cardIndex];
+  runRecognition([w.ja, w.kana].concat(w.accepts), w.ja, "pronFeedback", "micBtn");
+}
+
+function startChallengeCheck() {
+  const c = challengeList[challengeIndex];
+  runRecognition([c.word].concat(c.accepts), c.word, "challengeFeedback", "challengeMic");
+}
+
+// ===== Pitch accent (listen & imitate) =====
+// pattern: 1 = High, 0 = Low (one number per syllable)
+const PITCH_PAIRS = [
+  { kana: "あめ", moras: ["a", "me"],
+    a: { kanji: "雨", en: "rain", pattern: [1, 0] },
+    b: { kanji: "飴", en: "candy", pattern: [0, 1] } },
+  { kana: "はし", moras: ["ha", "shi"],
+    a: { kanji: "箸", en: "chopsticks", pattern: [1, 0] },
+    b: { kanji: "橋", en: "bridge", pattern: [0, 1] } },
+  { kana: "かき", moras: ["ka", "ki"],
+    a: { kanji: "牡蠣", en: "oyster", pattern: [1, 0] },
+    b: { kanji: "柿", en: "persimmon", pattern: [0, 1] } },
+  { kana: "いま", moras: ["i", "ma"],
+    a: { kanji: "今", en: "now", pattern: [1, 0] },
+    b: { kanji: "居間", en: "living room", pattern: [0, 1] } }
+];
+
+function pitchSvg(moras, pattern) {
+  const w = 40 * moras.length + 20;
+  let dots = "", line = "", labels = "";
+  const pts = [];
+  moras.forEach((m, i) => {
+    const x = 30 + i * 40;
+    const y = pattern[i] ? 12 : 32;
+    pts.push(x + "," + y);
+    const color = pattern[i] ? "var(--main)" : "var(--sub)";
+    dots += '<circle cx="' + x + '" cy="' + y + '" r="5" fill="' + color + '"/>';
+    labels += '<text x="' + x + '" y="46" text-anchor="middle" font-size="10" fill="#888">' + m + "</text>";
+  });
+  line = '<polyline points="' + pts.join(" ") + '" fill="none" stroke="#ccc" stroke-width="2"/>';
+  return '<svg width="' + w + '" height="50" viewBox="0 0 ' + w + ' 50">' + line + dots + labels + "</svg>";
+}
+
+function renderPitchList() {
+  const box = document.getElementById("pitchList");
+  let html = "";
+  PITCH_PAIRS.forEach((p, pi) => {
+    html += '<div class="pitch-pair"><h3>「' + p.kana + '」 — same sounds, different melody!</h3><div class="pair-row">';
+    [p.a, p.b].forEach((side, si) => {
+      html += '<div class="pitch-half">' +
+        '<div class="kanji">' + side.kanji + "</div>" +
+        '<div class="en">' + side.en + "</div>" +
+        pitchSvg(p.moras, side.pattern) + "<br>" +
+        '<button class="mini-speak" onclick="speakPitch(' + pi + "," + si + ')">🔊</button>' +
+        "</div>";
+    });
+    html += "</div></div>";
+  });
+  box.innerHTML = html;
+}
+
+function speakPitch(pairIndex, sideIndex) {
+  const p = PITCH_PAIRS[pairIndex];
+  speak(sideIndex === 0 ? p.a.kanji : p.b.kanji);
+}
+
+// ===== Tab switching =====
+function switchTab(tab) {
+  const tabs = { kana: "Kana", phrases: "Phrases", pitch: "Pitch" };
+  for (const key in tabs) {
+    document.getElementById("screen" + tabs[key]).classList.toggle("active", tab === key);
+    document.getElementById("tab" + tabs[key]).classList.toggle("active", tab === key);
+  }
+}
+
+// Initial render
+renderKanaGrid();
+startChallengeSet();
+renderCategoryButtons();
+renderCard();
+renderPitchList();
+</script>
+
+</body>
+</html>
